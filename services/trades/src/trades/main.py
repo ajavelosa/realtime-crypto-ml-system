@@ -2,7 +2,8 @@
 
 import time
 
-from kraken_api import KrakenAPI, Trade
+from trades.kraken_api import KrakenAPI, Trade
+from trades.config import config
 from loguru import logger
 from quixstreams import Application
 
@@ -47,10 +48,10 @@ def run(
 
 if __name__ == "__main__":
 
-    kraken_api = KrakenAPI(product_ids=["BTC/EUR"])
+    kraken_api = KrakenAPI(config.product_ids)
 
     run(
-        kafka_broker_address="localhost:31234",
-        kafka_topic_name="trades",
+        kafka_broker_address=config.kafka_broker_address,
+        kafka_topic_name=config.kafka_topic_name,
         kraken_api=kraken_api,
     )
