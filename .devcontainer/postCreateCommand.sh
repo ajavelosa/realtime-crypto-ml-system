@@ -10,6 +10,9 @@ cd /workspaces/real-time-ml-system-4
 mise trust
 mise install
 
+# Set cursor as default git editor
+echo 'export GIT_EDITOR="cursor --wait"' >> ~/.zshrc
+
 # Configure zsh with mise
 echo 'eval "$(/usr/local/bin/mise activate zsh)"' >> ~/.zshrc
 
