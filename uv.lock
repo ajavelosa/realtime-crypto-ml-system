@@ -217,6 +217,7 @@ dependencies = [
     { name = "pydantic-core" },
     { name = "pydantic-settings" },
     { name = "quixstreams" },
+    { name = "trades" },
     { name = "websocket-client" },
 ]
 
@@ -226,6 +227,7 @@ requires-dist = [
     { name = "pydantic-core", specifier = ">=2.27.2" },
     { name = "pydantic-settings", specifier = ">=2.8.1" },
     { name = "quixstreams", specifier = ">=3.13.1" },
+    { name = "trades", editable = "services/trades" },
     { name = "websocket-client", specifier = ">=1.8.0" },
 ]
 

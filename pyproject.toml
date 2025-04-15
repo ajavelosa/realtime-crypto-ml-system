@@ -13,7 +13,7 @@ dependencies = [
     "pydantic-settings>=2.8.1",
     "quixstreams>=3.13.1",
     "websocket-client>=1.8.0",
-    "trades"
+    "trades",
 ]
 
 [tool.uv.workspace]
@@ -21,3 +21,22 @@ members = ["services/trades"]
 
 [tool.uv.sources]
 trades = { workspace = true }
+
+[tool.ruff]
+line-length = 88
+lint.select = [
+    "C",  # mccabe rules
+    "F",  # pyflakes rules
+    "E",  # pycodestyle error rules
+    "W",  # pycodestyle warning rules
+    "B",  # flake8-bugbear rules
+    "I",  # isort rules
+]
+lint.ignore = [
+    "C901",  # max-complexity-10
+    "E501",  # line-too-long
+]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "single"

@@ -1,13 +1,13 @@
 # Module to process trades from Kraken and push them to Kafka
 
 import time
+from typing import List
 
-from trades.kraken_api import KrakenAPI, Trade
-from trades.config import config
 from loguru import logger
 from quixstreams import Application
 
-from typing import List
+from trades.config import config
+from trades.kraken_api import KrakenAPI, Trade
 
 
 def run(
@@ -17,17 +17,15 @@ def run(
 ):
     app = Application(
         broker_address=kafka_broker_address,
-        auto_offset_reset="earliest",
+        auto_offset_reset='earliest',
     )
 
     # Define the topic with a JSON value serializer
-    topic = app.topic(name=kafka_topic_name, value_serializer="json")
+    topic = app.topic(name=kafka_topic_name, value_serializer='json')
 
     # Create a producer instance
     with app.get_producer() as producer:
-
         while True:
-
             # 1. Fetch the trades from the external API
             events: List[Trade] = kraken_api.get_trades()
 
@@ -46,8 +44,8 @@ def run(
 
                 time.sleep(1)
 
-if __name__ == "__main__":
 
+if __name__ == '__main__':
     kraken_api = KrakenAPI(config.product_ids)
 
     run(
