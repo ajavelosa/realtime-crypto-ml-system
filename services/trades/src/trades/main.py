@@ -48,8 +48,11 @@ def run(
 if __name__ == '__main__':
     kraken_api = KrakenAPI(config.product_ids)
 
-    run(
-        kafka_broker_address=config.kafka_broker_address,
-        kafka_topic_name=config.kafka_topic_name,
-        kraken_api=kraken_api,
-    )
+    try:
+        run(
+            kafka_broker_address=config.kafka_broker_address,
+            kafka_topic_name=config.kafka_topic_name,
+            kraken_api=kraken_api,
+        )
+    except KeyboardInterrupt:
+        logger.info('Keyboard interrupt. Exiting gracefully...')

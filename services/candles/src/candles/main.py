@@ -1,5 +1,48 @@
+from datetime import timedelta
+
 from loguru import logger
 from quixstreams import Application
+
+
+def init_candle(trade: dict) -> dict:
+    """
+    Initializes a new candle for a given symbol.
+
+    Args:
+        trade (dict): The trade to initialize the candle with.
+
+    Returns:
+        dict: The initial candle state.
+    """
+    return {
+        'open': trade['price'],
+        'high': trade['price'],
+        'low': trade['price'],
+        'close': trade['price'],
+        'volume': trade['quantity'],
+        'pair': trade['product_id'],
+    }
+
+
+def update_candle(candle: dict, trade: dict) -> dict:
+    """
+    Updates the candle's open, high, low, close, and volume values
+    from trade's within the current candle window.
+
+    Args:
+        candle (dict): The current candle state.
+        trade (dict): The trade to update the candle with.
+
+    Returns:
+        dict: The updated candle state.
+    """
+    # open price does not change so we don't need to update it
+    candle['high'] = max(candle['high'], trade['price'])
+    candle['low'] = min(candle['low'], trade['price'])
+    candle['close'] = trade['price']
+    candle['volume'] += trade['quantity']
+
+    return candle
 
 
 def run(
@@ -7,8 +50,10 @@ def run(
     kafka_broker_address: str,
     kafka_input_topic: str,
     kafka_output_topic: str,
+    kafka_consumer_group: str,
     # candle parameters
     candle_seconds: int,
+    emit_intermediate_candles: bool = True,
 ):
     """
     Transforms a stream of trades into a stream of candles.
@@ -30,6 +75,7 @@ def run(
 
     app = Application(
         broker_address=kafka_broker_address,
+        consumer_group=kafka_consumer_group,
         auto_offset_reset='earliest',
     )
 
@@ -44,23 +90,57 @@ def run(
     sdf = app.dataframe(topic=trades_topic)
 
     # 2. Calculate the open, high, low, close, and volume for each candle by symbol.
-    # print the input data
-    sdf = sdf.update(lambda message: logger.info(f'Received message: {message}'))
 
-    # TODO: transform the input data into candles
+    # Transform the input data into candles
+    sdf = sdf.tumbling_window(duration_ms=timedelta(seconds=candle_seconds)).reduce(
+        reducer=update_candle, initializer=init_candle
+    )
+
+    # we emit all intermediate candles to make the system more responsive
+    if emit_intermediate_candles:
+        sdf = sdf.current()
+    else:
+        sdf = sdf.final()
+
+    # Extract open, high, low, close, volume, pair, window_start, and window_end from the dataframe
+    sdf['open'] = sdf['value']['open']
+    sdf['high'] = sdf['value']['high']
+    sdf['low'] = sdf['value']['low']
+    sdf['close'] = sdf['value']['close']
+    sdf['volume'] = sdf['value']['volume']
+    sdf['pair'] = sdf['value']['pair']
+
+    # Extract window_start and window_end from the dataframe
+    sdf['window_start'] = sdf['start']
+    sdf['window_end'] = sdf['end']
+
+    # Keep only the required columns
+    sdf = sdf[
+        ['open', 'high', 'low', 'close', 'volume', 'pair', 'window_start', 'window_end']
+    ]
+
+    sdf['candle_seconds'] = candle_seconds
+
+    # Log the output data
+    sdf = sdf.update(lambda value: logger.debug(f'Candle: {value}'))
 
     # 3. Output the candles to the `kafka output topic`.
-    # push the candles to the output topic
+    # Push the candles to the output topic
     sdf.to_topic(topic=candles_topic)
 
-    # run the streaming dataframe application
+    # Run the streaming dataframe application
     app.run()
 
 
 if __name__ == '__main__':
-    run(
-        kafka_broker_address='localhost:31234',
-        kafka_input_topic='trades',
-        kafka_output_topic='candles',
-        candle_seconds=60,
-    )
+    try:
+        run(
+            kafka_broker_address='localhost:31234',
+            kafka_input_topic='trades',
+            kafka_output_topic='candles',
+            kafka_consumer_group='candles',
+            candle_seconds=60,
+            emit_intermediate_candles=True,
+        )
+    except KeyboardInterrupt:
+        logger.info('Keyboard interrupt. Exiting gracefully...')
