@@ -17,10 +17,14 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = ["services/trades"]
+members = [
+    "services/trades",
+    "services/candles",
+]
 
 [tool.uv.sources]
 trades = { workspace = true }
+candles = { workspace = true }
 
 [tool.ruff]
 line-length = 88
