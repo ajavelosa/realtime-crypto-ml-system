@@ -3,6 +3,8 @@ from datetime import timedelta
 from loguru import logger
 from quixstreams import Application
 
+from candles.config import config
+
 
 def init_candle(trade: dict) -> dict:
     """
@@ -135,11 +137,11 @@ def run(
 if __name__ == '__main__':
     try:
         run(
-            kafka_broker_address='localhost:31234',
-            kafka_input_topic='trades',
-            kafka_output_topic='candles',
-            kafka_consumer_group='candles',
-            candle_seconds=60,
+            kafka_broker_address=config.kafka_broker_address,
+            kafka_input_topic=config.kafka_input_topic,
+            kafka_output_topic=config.kafka_output_topic,
+            kafka_consumer_group=config.kafka_consumer_group,
+            candle_seconds=config.candle_seconds,
             emit_intermediate_candles=True,
         )
     except KeyboardInterrupt:
