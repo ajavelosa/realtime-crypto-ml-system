@@ -25,7 +25,9 @@
         // - Linux: $HOME/.ssh
         // - macOS: $HOME/.ssh
         // - Windows: %USERPROFILE%\.ssh
-        "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly"
+        "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly",
+        // For Kubernetes configuration
+        "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.kube,target=/root/.kube"
     ],
 
     // 3. Use 'runArgs' to pass arguments to the container.
@@ -37,12 +39,18 @@
 
     // 4. Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
     "features": {
-        // Python with uv, Ruff, Mypy, MonkeyType and Bandit, installed using pipx 
+        // Python with uv, Ruff, Mypy, MonkeyType and Bandit, installed using pipx
         "ghcr.io/devcontainers/features/python:1": {
             "installTools": "true",
             "toolsToInstall": "uv,ruff,mypy,MonkeyType,bandit"
         },
-        
+
+        // zsh
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "configureZshAsDefaultShell": "true"
+        },
+
         // // git
         // "ghcr.io/devcontainers/features/git:1": {
         //     "version": "os-provided",
@@ -53,7 +61,12 @@
         "ghcr.io/devcontainers/features/docker-in-docker": {},
 
         // direnv ENV helper
-        "ghcr.io/devcontainers-extra/features/direnv:1": {},
+        "ghcr.io/devcontainers-extra/features/direnv:1": {
+            "version": "latest",
+            "configureZsh": true,
+            "configureBash": true,
+            "installStdlib": true
+        },
 
         // tmux
         "ghcr.io/devcontainers-extra/features/tmux-apt-get:1": {},
@@ -77,7 +90,13 @@
         "vscode": {
             // Set *default* container specific settings.json values on container create.
             "settings": {
-                "python.defaultInterpreterPath": "/workspaces/real-time-ml-system-cohort-4/.venv/bin/python"
+                "python.defaultInterpreterPath": "/workspaces/real-time-ml-system-4/.venv/bin/python",
+                "terminal.integrated.defaultProfile.linux": "zsh",
+                "terminal.integrated.profiles.linux": {
+                    "zsh": {
+                        "path": "zsh"
+                    }
+                }
             },
             // installs useful extensions.
             "extensions": [
@@ -112,8 +131,7 @@
     // "updateContentCommand": "",
 
     // 10. Use 'postCreateCommand' to run commands after the container is created.
-    // "postCreateCommand": "pip3 install --user -r requirements.txt",
-    "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
+    "postCreateCommand": "zsh .devcontainer/postCreateCommand.sh",
 
     // 11. Use 'postStartCommand' to run a command each time the container starts successfully.
     "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"

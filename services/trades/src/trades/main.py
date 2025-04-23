@@ -5,6 +5,7 @@ from typing import List
 
 from loguru import logger
 from quixstreams import Application
+from quixstreams.models import TopicConfig
 
 from trades.config import config
 from trades.kraken_api import KrakenAPI, Trade
@@ -21,7 +22,15 @@ def run(
     )
 
     # Define the topic with a JSON value serializer
-    topic = app.topic(name=kafka_topic_name, value_serializer='json')
+    topic = app.topic(
+        name=kafka_topic_name,
+        value_serializer='json',
+        key_serializer='json',
+        config=TopicConfig(
+            num_partitions=2,
+            replication_factor=1,
+        ),
+    )
 
     # Create a producer instance
     with app.get_producer() as producer:
@@ -48,8 +57,11 @@ def run(
 if __name__ == '__main__':
     kraken_api = KrakenAPI(config.product_ids)
 
-    run(
-        kafka_broker_address=config.kafka_broker_address,
-        kafka_topic_name=config.kafka_topic_name,
-        kraken_api=kraken_api,
-    )
+    try:
+        run(
+            kafka_broker_address=config.kafka_broker_address,
+            kafka_topic_name=config.kafka_topic_name,
+            kraken_api=kraken_api,
+        )
+    except KeyboardInterrupt:
+        logger.info('Keyboard interrupt. Exiting gracefully...')

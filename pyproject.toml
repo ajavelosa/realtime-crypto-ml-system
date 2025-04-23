@@ -8,19 +8,29 @@ description = """
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "candles",
     "loguru>=0.7.3",
-    "pydantic-core>=2.27.2",
-    "pydantic-settings>=2.8.1",
     "quixstreams>=3.13.1",
-    "websocket-client>=1.8.0",
     "trades",
+    "websocket-client>=1.8.0",
 ]
 
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["services"]
+
 [tool.uv.workspace]
-members = ["services/trades"]
+members = [
+    "services/trades",
+    "services/candles",
+]
 
 [tool.uv.sources]
 trades = { workspace = true }
+candles = { workspace = true }
 
 [tool.ruff]
 line-length = 88

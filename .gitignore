@@ -224,3 +224,4 @@ anthropic.env
 
 #
 kubeconfig
+~/.kube/*
