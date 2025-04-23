@@ -1,6 +1,8 @@
 #!/bin/bash
 # Steps:
 
+export KUBECONFIG=~/.kube/config-rwml-dev
+
 # 1. Delete the cluster (if it exists, otherwise it will fail)
 echo "Deleting the cluster..."
 kind delete cluster --name rwml-34fa
@@ -18,7 +20,6 @@ echo "Creating the cluster..."
 KIND_EXPERIMENTAL_DOCKER_NETWORK=rwml-34fa-network kind create cluster --config ./kind-with-portmapping.yaml
 
 echo "Configuring kubectl..."
-export KUBECONFIG=~/.kube/config
 # Export the kubeconfig to ensure we have the correct port
 kind export kubeconfig --name rwml-34fa
 kubectl config use-context kind-rwml-34fa

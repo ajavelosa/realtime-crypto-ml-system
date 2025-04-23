@@ -5,6 +5,7 @@ from typing import List
 
 from loguru import logger
 from quixstreams import Application
+from quixstreams.models import TopicConfig
 
 from trades.config import config
 from trades.kraken_api import KrakenAPI, Trade
@@ -21,7 +22,15 @@ def run(
     )
 
     # Define the topic with a JSON value serializer
-    topic = app.topic(name=kafka_topic_name, value_serializer='json')
+    topic = app.topic(
+        name=kafka_topic_name,
+        value_serializer='json',
+        key_serializer='json',
+        config=TopicConfig(
+            num_partitions=2,
+            replication_factor=1,
+        ),
+    )
 
     # Create a producer instance
     with app.get_producer() as producer:

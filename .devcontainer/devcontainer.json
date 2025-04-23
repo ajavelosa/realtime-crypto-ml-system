@@ -25,7 +25,9 @@
         // - Linux: $HOME/.ssh
         // - macOS: $HOME/.ssh
         // - Windows: %USERPROFILE%\.ssh
-        "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly"
+        "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly",
+        // For Kubernetes configuration
+        "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.kube,target=/root/.kube"
     ],
 
     // 3. Use 'runArgs' to pass arguments to the container.
@@ -59,7 +61,12 @@
         "ghcr.io/devcontainers/features/docker-in-docker": {},
 
         // direnv ENV helper
-        "ghcr.io/devcontainers-extra/features/direnv:1": {},
+        "ghcr.io/devcontainers-extra/features/direnv:1": {
+            "version": "latest",
+            "configureZsh": true,
+            "configureBash": true,
+            "installStdlib": true
+        },
 
         // tmux
         "ghcr.io/devcontainers-extra/features/tmux-apt-get:1": {},

@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from loguru import logger
 from quixstreams import Application
+from quixstreams.models import TopicConfig
 
 from candles.config import config
 
@@ -79,13 +80,22 @@ def run(
         broker_address=kafka_broker_address,
         consumer_group=kafka_consumer_group,
         auto_offset_reset='earliest',
+        auto_create_topics=True,
     )
 
     # input topic
     trades_topic = app.topic(kafka_input_topic, value_deserializer='json')
 
     # output topic
-    candles_topic = app.topic(kafka_output_topic, value_serializer='json')
+    candles_topic = app.topic(
+        kafka_output_topic,
+        value_serializer='json',
+        key_serializer='json',
+        config=TopicConfig(
+            num_partitions=1,
+            replication_factor=1,
+        ),
+    )
 
     # 1. Ingest raw trades from the `kafka input topic`
     # with a streaming dataframe.
@@ -127,8 +137,8 @@ def run(
     sdf = sdf.update(lambda value: logger.debug(f'Candle: {value}'))
 
     # 3. Output the candles to the `kafka output topic`.
-    # Push the candles to the output topic
-    sdf.to_topic(topic=candles_topic)
+    # Push the candles to the output topic with a string key
+    sdf.to_topic(topic=candles_topic, key=lambda value: value['pair'])
 
     # Run the streaming dataframe application
     app.run()
