@@ -27,15 +27,8 @@
         // - Windows: %USERPROFILE%\.ssh
         "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly",
         // For Kubernetes configuration
-        "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.kube,target=/root/.kube",
-        // For ZScaler certificate
-        "type=bind,source=${localEnv:HOME}/zscaler_root_ca.pem,target=/usr/local/share/ca-certificates/zscaler_root_ca.pem"
+        "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.kube,target=/root/.kube"
     ],
-
-    "containerEnv": {
-        "NODE_EXTRA_CA_CERTS": "/usr/local/share/ca-certificates/zscaler_root_ca.pem",
-        "NO_PROXY": "ghcr.io,*.ghcr.io"
-    },
 
     // 3. Use 'runArgs' to pass arguments to the container.
     // run the container with all GPUs

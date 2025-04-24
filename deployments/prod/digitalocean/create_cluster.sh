@@ -17,7 +17,7 @@ doctl kubernetes cluster delete ${CLUSTER_NAME}
 # 4. Create the cluster
 echo "Creating the cluster ${CLUSTER_NAME}."
 doctl kubernetes cluster create ${CLUSTER_NAME} \
-  --region sgp1 \
+  --region nyc1 \
   --size s-2vcpu-4gb-amd  \
   --count 2
 
@@ -38,7 +38,7 @@ kubectl create secret docker-registry ghcr-secret \
   --namespace=apps \
   --docker-server=ghcr.io \
   --docker-username=${GITHUB_USER} \
-  --docker-password=${GITHUB_PAT}
+  --docker-password=${GITHUB_TOKEN}
 
 echo "Cluster setup complete!"
 

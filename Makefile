@@ -17,10 +17,7 @@ dev:
 
 # Builds the trades service Docker image
 build-for-dev:
-	@cp /usr/local/share/ca-certificates/zscaler_root_ca.pem .; \
-	DOCKER_BUILDKIT=1 \
-	docker build -t ${service}:dev -f docker/${service}.Dockerfile .; \
-	rm zscaler_root_ca.pem
+	docker build -t ${service}:dev -f docker/${service}.Dockerfile .
 
 # Pushes the trades service Docker image to the Docker registry in our kind cluster
 push-for-dev:

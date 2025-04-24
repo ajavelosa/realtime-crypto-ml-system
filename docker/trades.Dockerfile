@@ -10,13 +10,6 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
-# Copy and configure SSL certificate
-COPY zscaler_root_ca.pem /usr/local/share/ca-certificates/
-RUN update-ca-certificates
-ENV SSL_CERT_FILE=/usr/local/share/ca-certificates/zscaler_root_ca.pem
-ENV REQUESTS_CA_BUNDLE=/usr/local/share/ca-certificates/zscaler_root_ca.pem
-ENV CURL_CA_BUNDLE=/usr/local/share/ca-certificates/zscaler_root_ca.pem
-
 COPY services /app/services
 
 # Install the project's dependencies using the lockfile and settings
