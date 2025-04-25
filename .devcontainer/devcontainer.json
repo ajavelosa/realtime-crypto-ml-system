@@ -9,15 +9,13 @@
     // For quick reference: https://containers.dev/implementors/json_reference/
     //
     "name": "py-3.12-bookworm",
-    "image": "python:3.12-bookworm",
-
-    //"build": {
-    //  "context": "..",
-    //  "dockerfile": "Dockerfile"
-    //},
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
 
     // 1. Use 'forwardPorts' to make a list of ports inside the container available locally.
-    // "forwardPorts": []
+    // "forwardPorts": [],
 
     // 2. Use 'mounts' to make a list of local directories available inside the container. More info: https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount
     "mounts": [
@@ -51,7 +49,7 @@
             "configureZshAsDefaultShell": "true"
         },
 
-        // // git
+        // git
         // "ghcr.io/devcontainers/features/git:1": {
         //     "version": "os-provided",
         //     "ppa": "false"
@@ -61,12 +59,7 @@
         "ghcr.io/devcontainers/features/docker-in-docker": {},
 
         // direnv ENV helper
-        "ghcr.io/devcontainers-extra/features/direnv:1": {
-            "version": "latest",
-            "configureZsh": true,
-            "configureBash": true,
-            "installStdlib": true
-        },
+        "ghcr.io/devcontainers-extra/features/direnv:1": {},
 
         // tmux
         "ghcr.io/devcontainers-extra/features/tmux-apt-get:1": {},
@@ -84,7 +77,7 @@
         "ghcr.io/rails/devcontainer/features/postgres-client:1.1.2": {}
     },
 
-    // 5. Configure tool-specific properties.
+    // 6. Configure tool-specific properties.
     "customizations": {
         // Configure properties specific to VS Code.
         "vscode": {
@@ -116,26 +109,26 @@
         }
     },
 
-    // 6. Set `remoteUser` to `root` to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    // 7. Set `remoteUser` to `root` to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
     "remoteUser": "root",
 
     // the following commands are related to container lifecylce. More info: https://containers.dev/implementors/json_reference/#lifecycle-scripts
 
-    // 7. Use 'initializeCommand' to run commands ON THE HOST before container is created or started.
+    // 8. Use 'initializeCommand' to run commands ON THE HOST before container is created or started.
     // "initializeCommand": "",
 
-    // 8. Use 'onCreateCommand' to run commands INSIDE THE CONTAINER after it started for the first time.
+    // 9. Use 'onCreateCommand' to run commands INSIDE THE CONTAINER after it started for the first time.
     // "onCreateCommand": "",
 
-    // 9. Use 'updateContentCommand' to run commands if the root filetree have any changes, during container creation.
+    // 10. Use 'updateContentCommand' to run commands if the root filetree have any changes, during container creation.
     // "updateContentCommand": "",
 
-    // 10. Use 'postCreateCommand' to run commands after the container is created.
+    // 11. Use 'postCreateCommand' to run commands after the container is created.
     "postCreateCommand": "zsh .devcontainer/postCreateCommand.sh",
 
-    // 11. Use 'postStartCommand' to run a command each time the container starts successfully.
+    // 12. Use 'postStartCommand' to run a command each time the container starts successfully.
     "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"
 
-    // 12. Use 'postAttachCommand' to run a command each time a tool attaches to the container successfully.
+    // 13. Use 'postAttachCommand' to run a command each time a tool attaches to the container successfully.
     // "postAttachCommand": "",
 }

@@ -8,7 +8,7 @@ direnv allow
 
 # 2. Authenticate with Digital Ocean
 echo "Authenticating with Digital Ocean..."
-doctl auth init ${DIGITALOCEAN_TOKEN}
+doctl auth init -t "${DIGITALOCEAN_TOKEN}"
 
 # 3. Delete the cluster (if it exists, otherwise it will fail)
 echo "Deleting the cluster ${CLUSTER_NAME}."
