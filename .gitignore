@@ -222,6 +222,9 @@ anthropic.env
 
 *.pyc
 
-#
+# kubernetes
 kubeconfig
 ~/.kube/*
+
+# zscaler
+zscaler_root_ca.crt
