@@ -35,7 +35,10 @@
     //  "all"
     //],
 
-    // 4. Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
+    // 4. Add container specific environment variables
+    "containerEnv": {},
+
+    // 5. Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
     "features": {
         // Python with uv, Ruff, Mypy, MonkeyType and Bandit, installed using pipx
         "ghcr.io/devcontainers/features/python:1": {
