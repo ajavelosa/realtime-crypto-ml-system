@@ -30,6 +30,10 @@ git config --unset-all core.hooksPath && pre-commit install
 # Set cursor as default git editor
 echo 'export GIT_EDITOR="cursor --wait"' >> ~/.zshrc
 
+# Configure Git pager settings
+echo 'export GIT_PAGER="cat"' >> ~/.zshrc
+git config --global core.pager "cat"
+
 # Configure zsh with mise
 echo 'eval "$(/usr/local/bin/mise activate zsh)"' >> ~/.zshrc
 
