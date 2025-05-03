@@ -19,14 +19,19 @@ docker network create --subnet 172.100.0.0/16 rwml-34fa-network
 echo "Creating the cluster..."
 KIND_EXPERIMENTAL_DOCKER_NETWORK=rwml-34fa-network kind create cluster --config ./kind-with-portmapping.yaml
 
+# 5. Update certificates in the control plane
+echo "Updating certificates..."
+docker exec rwml-34fa-control-plane update-ca-certificates
+
 echo "Configuring kubectl..."
-# Export the kubeconfig to ensure we have the correct port
+# 6. Export the kubeconfig to ensure we have the correct port
 kind export kubeconfig --name rwml-34fa
 kubectl config use-context kind-rwml-34fa
 
 echo "Waiting for cluster to be ready..."
 kubectl wait --for=condition=Ready nodes --all --timeout=300s
 
+# 7. Install Kafka
 echo "Installing Kafka..."
 chmod +x ./install_kafka.sh
 ./install_kafka.sh
@@ -34,6 +39,7 @@ chmod +x ./install_kafka.sh
 echo "Waiting for Kafka to be ready..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka -n kafka --timeout=300s
 
+# 8. Install Kafka UI
 echo "Installing Kafka UI..."
 chmod +x ./install_kafka_ui.sh
 ./install_kafka_ui.sh
@@ -41,6 +47,7 @@ chmod +x ./install_kafka_ui.sh
 echo "Waiting for Kafka UI to be ready..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka-ui -n kafka --timeout=300s
 
+# 9. Set up port forwarding for Kafka UI
 echo "Setting up port forwarding for Kafka UI..."
 kubectl port-forward -n kafka svc/kafka-ui 8182:8080
 
