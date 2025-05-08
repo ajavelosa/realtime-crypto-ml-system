@@ -20,10 +20,10 @@ nodes:
   - role: control-plane
     image: kindest/node:v1.31.4
     extraMounts:
-    - hostPath: /usr/local/share/ca-certificates/zscaler_root_ca.pem
-      containerPath: /usr/local/share/ca-certificates/zscaler_root_ca.pem
-    - hostPath: /usr/local/share/ca-certificates/zscaler_root_ca.pem
-      containerPath: /etc/ssl/certs/zscaler_root_ca.pem
+    - hostPath: /usr/local/share/ca-certificates/zscaler_root_ca.crt
+      containerPath: /usr/local/share/ca-certificates/zscaler_root_ca.crt
+    - hostPath: /usr/local/share/ca-certificates/zscaler_root_ca.crt
+      containerPath: /etc/ssl/certs/zscaler_root_ca.crt
     kubeadmConfigPatches:
     - |
       kind: InitConfiguration

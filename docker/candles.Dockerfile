@@ -1,6 +1,12 @@
 # Use a Python image with uv pre-installed
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+# Copy and install the certificate first
+COPY .devcontainer/zscaler_root_ca.crt /usr/local/share/ca-certificates/zscaler_root_ca.crt
+RUN update-ca-certificates && \
+    ln -sf /usr/local/share/ca-certificates/zscaler_root_ca.crt /etc/ssl/certs/zscaler_root_ca.crt && \
+    ln -sf /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.pem
+
 # Install the project into `/app`
 WORKDIR /app
 
@@ -9,6 +15,12 @@ ENV UV_COMPILE_BYTECODE=1
 
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
+
+# Configure pip/uv to use the certificate
+ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+ENV UV_CERT=/etc/ssl/certs/ca-certificates.crt
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 COPY services /app/services
 
