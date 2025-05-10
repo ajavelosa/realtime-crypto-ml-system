@@ -1,36 +1,31 @@
 [project]
 name = "crypto-predictor-system"
 version = "0.1.0"
-description = """
-    A machine learning system that predicts crypto
-    prices based on past prices and the latest news.
-    """
+description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "candles",
     "loguru>=0.7.3",
     "quixstreams>=3.13.1",
+    "requests>=2.32.3",
+    "technical-indicators",
     "trades",
     "websocket-client>=1.8.0",
 ]
 
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = ["services"]
+[project.optional-dependencies]
+talib = [
+    "ta-lib>=0.6.3",
+]
 
 [tool.uv.workspace]
-members = [
-    "services/trades",
-    "services/candles",
-]
+members = ["services/trades", "services/candles", "services/technical_indicators"]
 
 [tool.uv.sources]
 trades = { workspace = true }
 candles = { workspace = true }
+technical-indicators = { workspace = true }
 
 [tool.ruff]
 line-length = 88

@@ -18,7 +18,5 @@ ADD . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
-# Run the FastAPI application by default
-# Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
-# Uses `--host 0.0.0.0` to allow access from outside the container
-CMD ["uv", "run", "/app/services/candles/src/candles/main.py"]
+# Run the technical indicators service
+CMD ["uv", "run", "/app/services/technical_indicators/src/technical_indicators/main.py"]
