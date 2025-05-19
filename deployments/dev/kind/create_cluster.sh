@@ -1,15 +1,30 @@
 #!/bin/bash
-# Steps:
+set -e
 
 export KUBECONFIG=~/.kube/config-rwml-dev
 
-# 1. Delete the cluster (if it exists, otherwise it will fail)
-echo "Deleting the cluster..."
-kind delete cluster --name rwml-34fa
+# Function to check if a resource exists
+check_resource() {
+    local resource_type=$1
+    local resource_name=$2
+    if [ "$resource_type" = "cluster" ]; then
+        kind get clusters | grep -q "$resource_name"
+    elif [ "$resource_type" = "network" ]; then
+        docker network ls | grep -q "$resource_name"
+    fi
+}
 
-# 2. Delete the docker network (if it exists, otherwise it will fail)
-echo "Deleting the docker network..."
-docker network rm rwml-34fa-network
+# 1. Delete the cluster if it exists
+echo "Checking and deleting the cluster..."
+if check_resource "cluster" "rwml-34fa"; then
+    kind delete cluster --name rwml-34fa
+fi
+
+# 2. Delete the docker network if it exists
+echo "Checking and deleting the docker network..."
+if check_resource "network" "rwml-34fa-network"; then
+    docker network rm rwml-34fa-network
+fi
 
 # 3. Create the docker network
 echo "Creating the docker network..."
@@ -36,21 +51,20 @@ echo "Installing Kafka..."
 chmod +x ./install_kafka.sh
 ./install_kafka.sh
 
-echo "Waiting for Kafka to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka -n kafka --timeout=300s
-
 # 8. Install Kafka UI
 echo "Installing Kafka UI..."
 chmod +x ./install_kafka_ui.sh
 ./install_kafka_ui.sh
 
-echo "Waiting for Kafka UI to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka-ui -n kafka --timeout=300s
-
-# 9. Set up port forwarding for Kafka UI
-echo "Setting up port forwarding for Kafka UI..."
-kubectl port-forward -n kafka svc/kafka-ui 8182:8080
+# Wait for both Kafka and Kafka UI in parallel
+echo "Waiting for Kafka and Kafka UI to be ready..."
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka -n kafka --timeout=300s &
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka-ui -n kafka --timeout=300s &
+wait
 
 echo "Cluster setup complete!"
 echo "Kafka UI is available at http://localhost:8182"
 echo "Kafka broker is available at localhost:31234"
+echo ""
+echo "To start port forwarding for Kafka UI, run:"
+echo "kubectl port-forward -n kafka svc/kafka-ui 8182:8080"

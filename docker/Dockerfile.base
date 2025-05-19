@@ -1,13 +1,25 @@
 FROM python:3.12-slim-bookworm AS builder
 
-# # Install build dependencies
+# 1. Certificate setup
+COPY .devcontainer/zscaler_root_ca.crt /usr/local/share/ca-certificates/zscaler_root_ca.crt
+RUN update-ca-certificates && \
+    ln -sf /usr/local/share/ca-certificates/zscaler_root_ca.crt /etc/ssl/certs/zscaler_root_ca.crt && \
+    ln -sf /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.pem
+
+# 2. Environment variables for certificates
+ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
+    UV_CERT=/etc/ssl/certs/ca-certificates.crt \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+# 3. Build dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     build-essential \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ta-lib
+# 4. TA-Lib installation (optimized for better caching)
 ENV TALIB_DIR=/usr/local
 RUN wget https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-src.tar.gz && \
     tar -xzf ta-lib-0.6.4-src.tar.gz && \
@@ -16,32 +28,26 @@ RUN wget https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-
     make -j$(nproc) && \
     make install && \
     cd .. && \
-    rm -rf ta-lib-0.6.4-src.tar.gz ta-lib-0.6.4/
+    rm -rf ta-lib-0.6.4-src.tar.gz ta-lib-0.6.4/ && \
+    ldconfig
 
-# Ensure TA-Lib is linked correctly
-RUN ldconfig
-
-# Install uv
+# 5. UV installation and configuration
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
-# Enable bytecode compilation
-ENV UV_COMPILE_BYTECODE=1
-
-# Copy from the cache instead of linking since it's a mounted volume
-ENV UV_LINK_MODE=copy
-
-# Install the project into `/app`
+# 6. Project setup
 WORKDIR /app
 
-# Copy pyproject.toml, uv.lock that define the dependencies
+# Copy dependency files first (better layer caching)
 COPY pyproject.toml uv.lock /app/
 
-# Copy local packages that are used in the project and services
+# Copy source code
 COPY services /app/services
 COPY docker /app/docker
 
-# Install the dependencies
+# Install dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-  uv sync --frozen --no-dev --extra talib
+    uv sync --frozen --no-dev --extra talib
