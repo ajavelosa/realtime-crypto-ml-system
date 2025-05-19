@@ -64,7 +64,7 @@ def run(
     Steps:
     1. Ingests raw trades from the `kafka input topic`.
     2. Calculates the open, high, low, close, and volume for each candle by symbol.
-    4. Outputs the candles to the `kafka output topic`.
+    3. Outputs the candles to the `kafka output topic`.
 
     Args:
         kafka_broker_address (str): The address of the kafka broker.
@@ -92,7 +92,7 @@ def run(
         value_serializer='json',
         key_serializer='json',
         config=TopicConfig(
-            num_partitions=1,
+            num_partitions=2,
             replication_factor=1,
         ),
     )
@@ -123,12 +123,21 @@ def run(
     sdf['pair'] = sdf['value']['pair']
 
     # Extract window_start and window_end from the dataframe
-    sdf['window_start'] = sdf['start']
-    sdf['window_end'] = sdf['end']
+    sdf['window_start_ms'] = sdf['start']
+    sdf['window_end_ms'] = sdf['end']
 
     # Keep only the required columns
     sdf = sdf[
-        ['open', 'high', 'low', 'close', 'volume', 'pair', 'window_start', 'window_end']
+        [
+            'open',
+            'high',
+            'low',
+            'close',
+            'volume',
+            'pair',
+            'window_start_ms',
+            'window_end_ms',
+        ]
     ]
 
     sdf['candle_seconds'] = candle_seconds
