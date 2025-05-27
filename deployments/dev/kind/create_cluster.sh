@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 export KUBECONFIG=~/.kube/config-rwml-dev
 
 # Function to check if a resource exists
@@ -55,6 +53,11 @@ chmod +x ./install_kafka.sh
 echo "Installing Kafka UI..."
 chmod +x ./install_kafka_ui.sh
 ./install_kafka_ui.sh
+
+# 9. Install RisingWave
+echo "Installing RisingWave..."
+chmod 755 ./install_risingwave.sh
+./install_risingwave.sh
 
 # Wait for both Kafka and Kafka UI in parallel
 echo "Waiting for Kafka and Kafka UI to be ready..."

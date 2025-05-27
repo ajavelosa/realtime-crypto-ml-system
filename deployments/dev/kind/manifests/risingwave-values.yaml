@@ -27,8 +27,8 @@ stateStore:
     endpoint: minio:9000
     bucket: risingwave
     authentication:
-      username: root
-      password: "123456"
+      username: admin
+      password: "minio-D0408AC0"
 
 metaComponent:
   resources:
