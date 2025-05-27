@@ -19,6 +19,7 @@ def run(
     app = Application(
         broker_address=kafka_broker_address,
         auto_offset_reset='earliest',
+        auto_create_topics=True,
     )
 
     # Define the topic with a JSON value serializer
