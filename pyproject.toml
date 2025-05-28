@@ -9,6 +9,7 @@ dependencies = [
     "loguru>=0.7.3",
     "quixstreams>=3.13.1",
     "requests>=2.32.3",
+    "risingwave-py>=0.0.1",
     "technical-indicators",
     "trades",
     "websocket-client>=1.8.0",
