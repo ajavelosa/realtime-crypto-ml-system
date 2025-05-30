@@ -29,3 +29,15 @@ spec:
           value: "technical_indicators_consumer_group"
         - name: CANDLE_SECONDS
           value: "60"
+        - name: RISINGWAVE_HOST
+          value: "risingwave.risingwave.svc.cluster.local"
+        - name: RISINGWAVE_PORT
+          value: "4567"
+        - name: RISINGWAVE_USER
+          value: "root"
+        - name: RISINGWAVE_DATABASE
+          value: "dev"
+        - name: RISINGWAVE_PASSWORD
+          value: "123456"
+        - name: RISINGWAVE_TABLE_NAME
+          value: "technical_indicators"
