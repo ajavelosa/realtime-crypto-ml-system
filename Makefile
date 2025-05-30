@@ -7,6 +7,9 @@ port-forward-risingwave:
 port-forward-minio:
 	kubectl port-forward -n risingwave svc/risingwave-minio 9001:9001
 
+port-forward-grafana:
+	kubectl port-forward -n monitoring svc/grafana 3000:80
+
 open-psql:
 	psql -h localhost -p 4567 -U root -d dev
 
