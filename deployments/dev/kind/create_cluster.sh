@@ -59,11 +59,17 @@ echo "Installing RisingWave..."
 chmod 755 ./install_risingwave.sh
 ./install_risingwave.sh
 
+# 10. Install Grafana
+echo "Installing Grafana..."
+chmod 755 ./install_grafana.sh
+./install_grafana.sh
+
 # Wait for both Kafka and Kafka UI in parallel
 echo "Waiting for Kafka and Kafka UI to be ready..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka -n kafka --timeout=300s &
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka-ui -n kafka --timeout=300s &
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=risingwave -n risingwave --timeout=300s &
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n monitoring --timeout=300s &
 wait
 
 echo "Cluster setup complete!"
