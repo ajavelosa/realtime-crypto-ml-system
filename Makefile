@@ -2,8 +2,14 @@ port-forward-kafka:
 	kubectl port-forward -n kafka svc/kafka-ui 8182:8080
 
 port-forward-risingwave:
-	kubectl port-forward -n risingwave svc/risingwave-minio 9001:9001
 	kubectl port-forward -n risingwave svc/risingwave 4567:4567
+
+port-forward-minio:
+	kubectl port-forward -n risingwave svc/risingwave-minio 9001:9001
+
+open-psql:
+	psql -h localhost -p 4567 -U root -d dev
+
 lint:
 	ruff check .
 

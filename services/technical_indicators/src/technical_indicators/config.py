@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     max_candles_in_state: int = 70
 
     # TODO: if you prefer, do not set a default value for this field
-    table_name_in_risingwave: str = 'technical_indicators'
+    risingwave_table_name: str = 'technical_indicators'
+    risingwave_host: str = 'risingwave.risingwave.svc.cluster.local'
+    risingwave_port: int = 4567
+    risingwave_user: str = 'root'
+    risingwave_database: str = 'dev'
+    risingwave_password: str = '123456'
 
     @classmethod
     def from_yaml(cls, path_to_yaml: str):

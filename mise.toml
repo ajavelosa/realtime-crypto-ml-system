@@ -3,7 +3,7 @@ _.python.venv = { path = "{{config_root}}/.venv", create = true }
 KUBECONFIG = "{{config_root}}/kubeconfig"
 
 [tools]
-"python" = "3.13"
+python = "3.12"
 "aqua:cli/cli" = "2.68.1"
 "aqua:helm/helm" = "3.17.2"
 "aqua:jqlang/jq" = "1.7.1"
