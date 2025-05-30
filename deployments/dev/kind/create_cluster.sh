@@ -69,6 +69,7 @@ echo "Waiting for Kafka and Kafka UI to be ready..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka -n kafka --timeout=300s &
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka-ui -n kafka --timeout=300s &
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=risingwave -n risingwave --timeout=300s &
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n monitoring --timeout=300s &
 wait
 
 echo "Cluster setup complete!"
