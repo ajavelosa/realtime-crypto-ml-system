@@ -15,7 +15,7 @@
         }
       ]
     },
-    "description": "One minute candles for Bitcoin, transacted in USD",
+    "description": "One minute candles for Cryptocurrency, transacted in USD",
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
@@ -27,7 +27,7 @@
           "type": "grafana-postgresql-datasource",
           "uid": "eenetzglcg2dce"
         },
-        "description": "Bitcoin OHLC with volume",
+        "description": "OHLC candles with volume",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -113,131 +113,6 @@
           "mode": "candles+volume",
           "tooltip": {
             "hideZeros": false,
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "pluginVersion": "12.0.0+security-01",
-        "targets": [
-          {
-            "editorMode": "code",
-            "format": "table",
-            "rawQuery": true,
-            "rawSql": "SELECT\n  open,\n  high,\n  low,\n  close,\n  volume,\n  TO_TIMESTAMP(window_start_ms / 1000) AS timestamp\n\nFROM public.technical_indicators\n\nWHERE pair = 'BTC/USD'",
-            "refId": "A",
-            "sql": {
-              "columns": [
-                {
-                  "parameters": [],
-                  "type": "function"
-                }
-              ],
-              "groupBy": [
-                {
-                  "property": {
-                    "type": "string"
-                  },
-                  "type": "groupBy"
-                }
-              ],
-              "limit": 50
-            }
-          }
-        ],
-        "title": "BTC/USD",
-        "type": "candlestick"
-      },
-      {
-        "datasource": {
-          "type": "grafana-postgresql-datasource",
-          "uid": "eenetzglcg2dce"
-        },
-        "description": "ETH / USD OHLC prices with volumes",
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "axisBorderShow": false,
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "barWidthFactor": 0.6,
-              "drawStyle": "line",
-              "fillOpacity": 0,
-              "gradientMode": "none",
-              "hideFrom": {
-                "legend": false,
-                "tooltip": false,
-                "viz": false
-              },
-              "insertNulls": false,
-              "lineInterpolation": "linear",
-              "lineWidth": 1,
-              "pointSize": 1,
-              "scaleDistribution": {
-                "type": "linear"
-              },
-              "showPoints": "auto",
-              "spanNulls": false,
-              "stacking": {
-                "group": "A",
-                "mode": "none"
-              },
-              "thresholdsStyle": {
-                "mode": "off"
-              }
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green"
-                },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "gridPos": {
-          "h": 11,
-          "w": 24,
-          "x": 0,
-          "y": 10
-        },
-        "id": 1,
-        "options": {
-          "candleStyle": "candles",
-          "colorStrategy": "open-close",
-          "colors": {
-            "down": "red",
-            "up": "green"
-          },
-          "fields": {
-            "close": "close",
-            "high": "high",
-            "low": "low",
-            "open": "open",
-            "volume": "volume"
-          },
-          "includeAllFields": false,
-          "legend": {
-            "calcs": [],
-            "displayMode": "list",
-            "placement": "bottom",
-            "showLegend": true
-          },
-          "mode": "candles+volume",
-          "tooltip": {
-            "hideZeros": false,
             "mode": "multi",
             "sort": "none"
           }
@@ -245,14 +120,10 @@
         "pluginVersion": "12.0.0+security-01",
         "targets": [
           {
-            "datasource": {
-              "type": "grafana-postgresql-datasource",
-              "uid": "eenetzglcg2dce"
-            },
             "editorMode": "code",
             "format": "table",
             "rawQuery": true,
-            "rawSql": "SELECT\n  open,\n  high,\n  low,\n  close,\n  volume,\n  TO_TIMESTAMP(window_start_ms / 1000) AS timestamp\n\nFROM public.technical_indicators\n\nWHERE pair = 'ETH/USD'",
+            "rawSql": "SELECT\n  open,\n  high,\n  low,\n  close,\n  volume,\n  TO_TIMESTAMP(window_start_ms / 1000) AS timestamp\n\nFROM public.technical_indicators\n\nWHERE pair = $CryptoPair ",
             "refId": "A",
             "sql": {
               "columns": [
@@ -273,24 +144,47 @@
             }
           }
         ],
-        "title": "ETH/USD",
+        "title": "OHLC",
         "type": "candlestick"
       }
     ],
     "preload": false,
-    "refresh": "auto",
+    "refresh": "5s",
     "schemaVersion": 41,
     "tags": [],
     "templating": {
-      "list": []
+      "list": [
+        {
+          "allowCustomValue": false,
+          "current": {
+            "text": [
+              "BTC/USD"
+            ],
+            "value": [
+              "BTC/USD"
+            ]
+          },
+          "definition": "SELECT DISTINCT pair FROM technical_indicators ORDER BY 1",
+          "description": "Cryptocurrency Pair to select",
+          "label": "Pair",
+          "multi": true,
+          "name": "CryptoPair",
+          "options": [],
+          "query": "SELECT DISTINCT pair FROM technical_indicators ORDER BY 1",
+          "refresh": 1,
+          "regex": "",
+          "sort": 1,
+          "type": "query"
+        }
+      ]
     },
     "time": {
-      "from": "now-2h",
+      "from": "now-30m",
       "to": "now"
     },
     "timepicker": {},
     "timezone": "browser",
-    "title": "BTC/USD (1m)",
+    "title": "OHLC",
     "uid": "bb850e55-80f1-4e5a-a82e-9992ae54d1f8",
-    "version": 6
+    "version": 9
   }
