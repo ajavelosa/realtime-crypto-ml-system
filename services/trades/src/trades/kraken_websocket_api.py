@@ -57,7 +57,7 @@ class KrakenWebsocketAPI:
         # Method 2 to create a list of trades
         # Using list comprehension (this is faster)
         trades = [
-            Trade(
+            Trade.from_kraken_websocket_response(
                 product_id=trade['symbol'],
                 price=trade['price'],
                 quantity=trade['qty'],
@@ -92,3 +92,11 @@ class KrakenWebsocketAPI:
         for _ in product_ids:
             _ = self._ws_client.recv()
             _ = self._ws_client.recv()
+
+    def is_done(self) -> bool:
+        """
+        Returns True if there are no more trades to fetch, False otherwise.
+
+        Websocket API is never done since we stream live data.
+        """
+        return False
