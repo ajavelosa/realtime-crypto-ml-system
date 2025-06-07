@@ -1,5 +1,6 @@
 # Use our base image with TA-Lib pre-installed
-FROM real-time-ml-system-4-base:latest
+ARG BASE_IMAGE=base:latest
+FROM ${BASE_IMAGE}
 
 # Install the project into `/app`
 WORKDIR /app

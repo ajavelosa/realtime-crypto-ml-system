@@ -243,7 +243,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.3" },
     { name = "risingwave-py", specifier = ">=0.0.1" },
     { name = "ta-lib", marker = "extra == 'talib'", specifier = ">=0.6.3" },
-    { name = "technical-indicators", editable = "services/technical_indicators" },
+    { name = "technical-indicators", editable = "services/technical-indicators" },
     { name = "trades", editable = "services/trades" },
     { name = "websocket-client", specifier = ">=1.8.0" },
 ]
@@ -968,7 +968,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/35/dc/e7fab66315fdd2e2e
 [[package]]
 name = "technical-indicators"
 version = "0.1.0"
-source = { editable = "services/technical_indicators" }
+source = { editable = "services/technical-indicators" }
 dependencies = [
     { name = "loguru" },
     { name = "quixstreams" },

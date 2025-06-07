@@ -30,7 +30,17 @@ nodes:
       nodeRegistration:
         kubeletExtraArgs:
           node-labels: "ingress-ready=true"
-
+    - |
+      kind: KubeletConfiguration
+      systemReserved:
+        cpu: "1"
+        memory: "1Gi"
+      kubeReserved:
+        cpu: "500m"
+        memory: "1Gi"
+      evictionHard:
+        memory.available: "500Mi"
+        nodefs.available: "10%"
     extraPortMappings:
     - containerPort: 80
       hostPort: 80
