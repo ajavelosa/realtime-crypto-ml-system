@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: technical-indicators
-        image: technical_indicators:dev
+        image: technical-indicators:dev
         imagePullPolicy: Never # Use the local image
         env:
         - name: KAFKA_BROKER_ADDRESS
@@ -26,7 +26,7 @@ spec:
         - name: KAFKA_OUTPUT_TOPIC
           value: "technical-indicators"
         - name: KAFKA_CONSUMER_GROUP
-          value: "technical_indicators_consumer_group"
+          value: "technical-indicators-consumer-group"
         - name: CANDLE_SECONDS
           value: "60"
         - name: RISINGWAVE_HOST
