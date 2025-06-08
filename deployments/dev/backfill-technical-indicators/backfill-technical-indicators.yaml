@@ -1,25 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: trades
+  name: trades-historical
   labels:
-    app: trades
+    app: trades-historical
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: trades
+      app: trades-historical
   template:
     metadata:
       labels:
-        app: trades
+        app: trades-historical
     spec:
       containers:
-      - name: trades
+      - name: trades-historical
         image: trades:dev
         imagePullPolicy: Never # Use the local image
         env:
         - name: KAFKA_BROKER_ADDRESS
           value: kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092
         - name: KAFKA_TOPIC_NAME
-          value: "trades"
+          value: "trades_historical"
+        - name: LIVE_OR_HISTORICAL
+          value: "historical"
+        - name: LAST_N_DAYS
+          value: "30"
