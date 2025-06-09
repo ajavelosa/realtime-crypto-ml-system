@@ -57,7 +57,7 @@ build_base_image() {
     echo "Building base image for ${env}..."
 
     if [ "$env" == "dev" ]; then
-        docker build -t base:latest -f docker/Dockerfile.base .
+        DOCKER_BUILDKIT=1 docker build -t base:latest -f docker/Dockerfile.base .
     else
         push_image_to_github "base" "prod" ""
     fi

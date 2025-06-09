@@ -3,14 +3,15 @@ FROM python:3.12-slim-bookworm AS builder
 # 1. Certificate setup
 COPY .devcontainer/zscaler_root_ca.crt /usr/local/share/ca-certificates/zscaler_root_ca.crt
 RUN update-ca-certificates && \
-    ln -sf /usr/local/share/ca-certificates/zscaler_root_ca.crt /etc/ssl/certs/zscaler_root_ca.crt && \
-    ln -sf /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.pem
+    ln -sf /usr/local/share/ca-certificates/zscaler_root_ca.crt /usr/local/share/ca-certificates/ca-certificates.crt
 
-# 2. Environment variables for certificates
+# 2. Environment variables for certificates and networking
 ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
     UV_CERT=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
-    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # 3. Build dependencies
 RUN apt-get update && apt-get install -y \
@@ -19,22 +20,18 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. TA-Lib installation (optimized for better caching)
-ENV TALIB_DIR=/usr/local
+# 4. TA-Lib installation
 RUN wget https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-src.tar.gz && \
     tar -xzf ta-lib-0.6.4-src.tar.gz && \
     cd ta-lib-0.6.4/ && \
-    ./configure --prefix=$TALIB_DIR && \
-    make -j$(nproc) && \
+    ./configure --prefix=/usr && \
+    make && \
     make install && \
     cd .. && \
-    rm -rf ta-lib-0.6.4-src.tar.gz ta-lib-0.6.4/ && \
-    ldconfig
+    rm -rf ta-lib-0.6.4-src.tar.gz ta-lib-0.6.4/
 
-# 5. UV installation and configuration
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+# 5. Install uv directly
+RUN pip install --no-cache-dir uv
 
 # 6. Project setup
 WORKDIR /app
@@ -50,4 +47,6 @@ COPY docker /app/docker
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv pip install --system "numpy==1.23.5" && \
+    uv pip install --system "ta-lib==0.6.3" --no-build-isolation && \
     uv sync --frozen --no-dev --extra talib
