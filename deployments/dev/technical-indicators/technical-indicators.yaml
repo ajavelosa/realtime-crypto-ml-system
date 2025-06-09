@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: technical-indicators
+  namespace: services
   labels:
     app: technical-indicators
 spec:
@@ -24,9 +25,9 @@ spec:
         - name: KAFKA_INPUT_TOPIC
           value: "candles"
         - name: KAFKA_OUTPUT_TOPIC
-          value: "technical-indicators"
+          value: "technical_indicators"
         - name: KAFKA_CONSUMER_GROUP
-          value: "technical-indicators-consumer-group"
+          value: "technical_indicators_consumer_group"
         - name: CANDLE_SECONDS
           value: "60"
         - name: RISINGWAVE_HOST

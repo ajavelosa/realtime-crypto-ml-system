@@ -64,6 +64,10 @@ echo "Installing Grafana..."
 chmod 755 ./install_grafana.sh
 ./install_grafana.sh
 
+# 11. Create namespace for services
+echo "Creating namespaces..."
+kubectl create namespace services
+
 echo "Cluster setup complete!"
 echo "Kafka UI is available at http://localhost:8182"
 echo "Kafka broker is available at localhost:31234"
