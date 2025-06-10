@@ -64,7 +64,12 @@ echo "Installing Grafana..."
 chmod 755 ./install_grafana.sh
 ./install_grafana.sh
 
-# 11. Create namespace for services
+# 11. Install Metrics Server
+echo "Installing Metrics Server..."
+chmod 755 ./install_metrics_server.sh
+./install_metrics_server.sh
+
+# 12. Create namespace for services
 echo "Creating namespaces..."
 kubectl create namespace services
 
