@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: technical-indicators
+  namespace: services
   labels:
     app: technical-indicators
 spec:
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
       - name: technical-indicators
-        image: technical_indicators:dev
+        image: technical-indicators:dev
         imagePullPolicy: Never # Use the local image
         env:
         - name: KAFKA_BROKER_ADDRESS
@@ -24,7 +25,7 @@ spec:
         - name: KAFKA_INPUT_TOPIC
           value: "candles"
         - name: KAFKA_OUTPUT_TOPIC
-          value: "technical-indicators"
+          value: "technical_indicators"
         - name: KAFKA_CONSUMER_GROUP
           value: "technical_indicators_consumer_group"
         - name: CANDLE_SECONDS

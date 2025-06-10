@@ -1,5 +1,6 @@
 # Use our base image with TA-Lib pre-installed
-FROM real-time-ml-system-4-base:latest
+ARG BASE_IMAGE=base:latest
+FROM ${BASE_IMAGE}
 
 # Install the project into `/app`
 WORKDIR /app
@@ -19,4 +20,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
 # Run the technical indicators service
-CMD ["uv", "run", "/app/services/technical_indicators/src/technical_indicators/main.py"]
+CMD ["uv", "run", "/app/services/technical-indicators/src/technical_indicators/main.py"]
