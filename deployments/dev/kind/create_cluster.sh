@@ -64,13 +64,14 @@ echo "Installing Grafana..."
 chmod 755 ./install_grafana.sh
 ./install_grafana.sh
 
-# Wait for both Kafka and Kafka UI in parallel
-echo "Waiting for Kafka and Kafka UI to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka -n kafka --timeout=300s &
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=kafka-ui -n kafka --timeout=300s &
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=risingwave -n risingwave --timeout=300s &
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n monitoring --timeout=300s &
-wait
+# 11. Install Metrics Server
+echo "Installing Metrics Server..."
+chmod 755 ./install_metrics_server.sh
+./install_metrics_server.sh
+
+# 12. Create namespace for services
+echo "Creating namespaces..."
+kubectl create namespace services
 
 echo "Cluster setup complete!"
 echo "Kafka UI is available at http://localhost:8182"

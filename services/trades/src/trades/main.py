@@ -1,20 +1,22 @@
 # Module to process trades from Kraken and push them to Kafka
 
-import time
-from typing import List
+from typing import List, Optional
 
 from loguru import logger
 from quixstreams import Application
 from quixstreams.models import TopicConfig
 
 from trades.config import config
-from trades.kraken_api import KrakenAPI, Trade
+from trades.kraken_rest_api import KrakenRestAPI
+from trades.kraken_websocket_api import KrakenWebsocketAPI
+from trades.trade import Trade
 
 
 def run(
     kafka_broker_address: str,
     kafka_topic_name: str,
-    kraken_api: KrakenAPI,
+    kraken_api: KrakenWebsocketAPI | KrakenRestAPI,
+    kafka_topic_partitions: Optional[int] = 1,
 ):
     app = Application(
         broker_address=kafka_broker_address,
@@ -28,14 +30,14 @@ def run(
         value_serializer='json',
         key_serializer='json',
         config=TopicConfig(
-            num_partitions=2,
+            num_partitions=kafka_topic_partitions,
             replication_factor=1,
         ),
     )
 
     # Create a producer instance
     with app.get_producer() as producer:
-        while True:
+        while not kraken_api.is_done():
             # 1. Fetch the trades from the external API
             events: List[Trade] = kraken_api.get_trades()
 
@@ -52,17 +54,23 @@ def run(
 
                 logger.info(f'Trade {event.to_dict()} pushed to Kafka')
 
-                time.sleep(1)
-
 
 if __name__ == '__main__':
-    kraken_api = KrakenAPI(config.product_ids)
+    if config.live_or_historical == 'live':
+        kraken_api = KrakenWebsocketAPI(config.product_ids)
+    else:
+        kraken_api = KrakenRestAPI(
+            product_id=config.product_ids[0],
+            last_n_days=config.last_n_days,
+            count_trades=config.count_trades,
+        )
 
     try:
         run(
             kafka_broker_address=config.kafka_broker_address,
             kafka_topic_name=config.kafka_topic_name,
             kraken_api=kraken_api,
+            kafka_topic_partitions=len(config.product_ids),
         )
     except KeyboardInterrupt:
         logger.info('Keyboard interrupt. Exiting gracefully...')
