@@ -1,7 +1,6 @@
 # Module to process trades from Kraken and push them to Kafka
 
-import time
-from typing import List
+from typing import List, Optional
 
 from loguru import logger
 from quixstreams import Application
@@ -17,6 +16,7 @@ def run(
     kafka_broker_address: str,
     kafka_topic_name: str,
     kraken_api: KrakenWebsocketAPI | KrakenRestAPI,
+    kafka_topic_partitions: Optional[int] = 1,
 ):
     app = Application(
         broker_address=kafka_broker_address,
@@ -30,7 +30,7 @@ def run(
         value_serializer='json',
         key_serializer='json',
         config=TopicConfig(
-            num_partitions=2,
+            num_partitions=kafka_topic_partitions,
             replication_factor=1,
         ),
     )
@@ -54,8 +54,6 @@ def run(
 
                 logger.info(f'Trade {event.to_dict()} pushed to Kafka')
 
-                time.sleep(1)
-
 
 if __name__ == '__main__':
     if config.live_or_historical == 'live':
@@ -64,6 +62,7 @@ if __name__ == '__main__':
         kraken_api = KrakenRestAPI(
             product_id=config.product_ids[0],
             last_n_days=config.last_n_days,
+            count_trades=config.count_trades,
         )
 
     try:
@@ -71,6 +70,7 @@ if __name__ == '__main__':
             kafka_broker_address=config.kafka_broker_address,
             kafka_topic_name=config.kafka_topic_name,
             kraken_api=kraken_api,
+            kafka_topic_partitions=len(config.product_ids),
         )
     except KeyboardInterrupt:
         logger.info('Keyboard interrupt. Exiting gracefully...')

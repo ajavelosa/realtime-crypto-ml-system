@@ -34,10 +34,10 @@ nodes:
       kind: KubeletConfiguration
       systemReserved:
         cpu: "3"
-        memory: "4Gi"
+        memory: "3Gi"
       kubeReserved:
         cpu: "2"
-        memory: "4Gi"
+        memory: "3Gi"
       evictionHard:
         memory.available: "1Gi"
         nodefs.available: "20%"

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     live_or_historical: str = 'live'
     last_n_days: int = 30
+    count_trades: int = 1000
 
 
 config = Settings()
