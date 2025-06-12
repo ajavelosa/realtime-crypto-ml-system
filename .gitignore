@@ -228,3 +228,6 @@ kubeconfig
 
 # zscaler
 zscaler_root_ca.crt
+
+# secrets
+*-secret.yaml

@@ -123,7 +123,7 @@
             "editorMode": "code",
             "format": "table",
             "rawQuery": true,
-            "rawSql": "SELECT\n  open,\n  high,\n  low,\n  close,\n  volume,\n  TO_TIMESTAMP(window_start_ms / 1000) AS timestamp\n\nFROM public.technical_indicators\n\nWHERE pair = $CryptoPair ",
+            "rawSql": "SELECT\n  open,\n  high,\n  low,\n  close,\n  volume,\n  TO_TIMESTAMP(window_start_ms / 1000) AS timestamp\n\nFROM public.technical_indicators\n\nWHERE pair = $CryptoPair",
             "refId": "A",
             "sql": {
               "columns": [
@@ -164,13 +164,13 @@
               "BTC/USD"
             ]
           },
-          "definition": "SELECT DISTINCT pair FROM technical_indicators ORDER BY 1",
+          "definition": "SELECT DISTINCT pair FROM technical_indicators",
           "description": "Cryptocurrency Pair to select",
           "label": "Pair",
           "multi": true,
           "name": "CryptoPair",
           "options": [],
-          "query": "SELECT DISTINCT pair FROM technical_indicators ORDER BY 1",
+          "query": "SELECT DISTINCT pair FROM technical_indicators",
           "refresh": 1,
           "regex": "",
           "sort": 1,

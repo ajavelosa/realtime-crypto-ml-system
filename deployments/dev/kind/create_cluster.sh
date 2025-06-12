@@ -48,6 +48,7 @@ kubectl wait --for=condition=Ready nodes --all --timeout=300s
 echo "Installing Kafka..."
 chmod +x ./install_kafka.sh
 ./install_kafka.sh
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=strimzi-cluster-operator -n kafka --timeout=300s
 
 # 8. Install Kafka UI
 echo "Installing Kafka UI..."
@@ -69,7 +70,12 @@ echo "Installing Metrics Server..."
 chmod 755 ./install_metrics_server.sh
 ./install_metrics_server.sh
 
-# 12. Create namespace for services
+# 12. Install MLFlow
+echo "Installing MLFlow..."
+chmod 755 ./install_mlflow.sh
+./install_mlflow.sh
+
+# 13. Create namespace for services
 echo "Creating namespaces..."
 kubectl create namespace services
 

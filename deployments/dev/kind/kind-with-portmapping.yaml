@@ -22,17 +22,6 @@ nodes:
       nodeRegistration:
         kubeletExtraArgs:
           node-labels: "ingress-ready=true"
-    - |
-      kind: KubeletConfiguration
-      systemReserved:
-        cpu: "3"
-        memory: "3Gi"
-      kubeReserved:
-        cpu: "2"
-        memory: "3Gi"
-      evictionHard:
-        memory.available: "1Gi"
-        nodefs.available: "20%"
     extraPortMappings:
     - containerPort: 80
       hostPort: 80
