@@ -3,8 +3,11 @@ name = "candles"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
-dependencies = []
+requires-python = ">=3.12"
+dependencies = [
+    "quixstreams>=3.13.1",
+    "websocket-client>=1.8.0",
+]
 
 [build-system]
 requires = ["hatchling"]

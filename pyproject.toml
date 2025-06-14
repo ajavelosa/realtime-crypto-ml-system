@@ -3,14 +3,14 @@ name = "crypto-predictor-system"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.12"
 dependencies = [
     "candles",
     "loguru>=0.7.3",
-    "numpy==1.23.5",
+    "predictor",
     "quixstreams>=3.13.1",
     "requests>=2.32.3",
-    "risingwave-py>=0.0.1",
+    "risingwave-py",
     "technical-indicators",
     "trades",
     "websocket-client>=1.8.0",
@@ -22,12 +22,18 @@ talib = [
 ]
 
 [tool.uv.workspace]
-members = ["services/trades", "services/candles", "services/technical-indicators"]
+members = [
+    "services/candles",
+    "services/predictor",
+    "services/technical-indicators",
+    "services/trades",
+]
 
 [tool.uv.sources]
 trades = { workspace = true }
 candles = { workspace = true }
 technical-indicators = { workspace = true }
+predictor = { workspace = true }
 
 [tool.ruff]
 line-length = 88
