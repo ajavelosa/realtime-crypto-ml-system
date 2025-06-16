@@ -7,10 +7,11 @@ Has the following steps:
 3. Validate the data
 4. Profile the data
 5. Split the data into train and test
-6. Create a baseline model
-7. XGBoost model with default hyperparameters
-8. Hyperparameter tuning with Optuna
-9. Validate the final model
+6. Split features and target
+7. Create a baseline model
+8. XGBoost model with default hyperparameters
+9. Hyperparameter tuning with Optuna
+10. Validate the final model
 10. Push the model to MLFlow
 11. Log the model on MLFlow
 """
@@ -21,10 +22,12 @@ import mlflow
 import pandas as pd
 from loguru import logger
 from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
+from sklearn.metrics import mean_absolute_error
 from ydata_profiling import ProfileReport
 
 from predictor.data_validation import validate_data
 from predictor.model_registry import get_model_name
+from predictor.models import BaselineModel
 
 
 def load_ts_data_from_risingwave(
@@ -114,13 +117,14 @@ def train(
     risingwave_user: str,
     risingwave_password: str,
     risingwave_database: str,
+    risingwave_table: str,
     pair: str,
     training_set_size_days: int,
     candle_seconds: int,
     prediction_horizon_seconds: int,
     output_html_path: str,
+    train_test_split_ratio: float,
     n_rows_to_profile: Optional[int] = None,
-    table: str = None,
 ) -> None:
     """
     Train a predictor model for the given pair and data. If the model is good, push it
@@ -133,13 +137,14 @@ def train(
         risingwave_user: The user of the RisingWave instance.
         risingwave_password: The password of the RisingWave instance.
         risingwave_database: The database of the RisingWave instance.
+        risingwave_table: The table to fetch the technical indicators from.
         pair: The pair of the technical indicators to fetch.
         training_set_size_days: The number of days in the past to fetch the technical indicators for.
         candle_seconds: The number of seconds in the candle.
         prediction_horizon_seconds: The number of seconds in the prediction horizon.
         output_html_path: The path to save the HTML file to.
         n_rows_to_profile: The number of rows to profile.
-        table: The table to fetch the technical indicators from.
+        train_test_split_ratio: The ratio of the training set to the test set.
     """
     logger.info(
         f'Starting training for {pair} for the last {training_set_size_days} days.'
@@ -178,7 +183,7 @@ def train(
             pair=pair,
             training_set_size_days=training_set_size_days,
             candle_seconds=candle_seconds,
-            table=table,
+            table=risingwave_table,
         )
 
         # Step 2: Add a target column
@@ -214,6 +219,49 @@ def train(
         mlflow.log_artifact(local_path=output_html_path, artifact_path='eda_report')
         logger.info('EDA report logged to MLFlow.')
 
+        # Step 5: Split the data into train and test
+
+        # We want to split the data such that earlier data is in the training set
+        # and later data is in the test set. We do this because we want to predict
+        # the future price of the asset, and we want to use the past data to train
+        # the model.
+
+        logger.info('Splitting data into train and test...')
+        train_data_size = int(len(ts_data) * train_test_split_ratio)
+        train_data = ts_data.iloc[:train_data_size]
+        test_data = ts_data.iloc[train_data_size:]
+
+        # Log train and test data size
+        logger.info('Logging train and test data shape to MLFlow...')
+        mlflow.log_param('train_data_shape', train_data.shape)
+        mlflow.log_param('test_data_shape', test_data.shape)
+
+        # Step 6: Split features and target
+        logger.info('Splitting features and target...')
+        X_train = train_data.drop(columns=['target'])
+        y_train = train_data['target']
+        X_test = test_data.drop(columns=['target'])
+        y_test = test_data['target']
+        mlflow.log_param('X_train_shape', X_train.shape)
+        mlflow.log_param('y_train_shape', y_train.shape)
+        mlflow.log_param('X_test_shape', X_test.shape)
+        mlflow.log_param('y_test_shape', y_test.shape)
+
+        # Log train and test data to MLFlow
+        train_dataset = mlflow.data.from_pandas(X_train)
+        mlflow.log_input(train_dataset, context='training')
+        test_dataset = mlflow.data.from_pandas(X_test)
+        mlflow.log_input(test_dataset, context='test')
+
+        # Step 7: Train a dummy baseline model
+        logger.info('Creating a dummy baseline model...')
+
+        baseline_model = BaselineModel()
+        y_pred = baseline_model.predict(X_test)
+        test_mae_baseline = mean_absolute_error(y_test, y_pred)
+        mlflow.log_metric('baseline_model_test_mae', test_mae_baseline)
+        logger.info(f'Baseline model test MAE: {test_mae_baseline:.4f} for {pair}')
+
 
 if __name__ == '__main__':
     train(
@@ -223,11 +271,12 @@ if __name__ == '__main__':
         risingwave_user='root',
         risingwave_password='123456',
         risingwave_database='dev',
+        risingwave_table='public.technical_indicators',
         pair='BTC/USD',
         training_set_size_days=30,
         candle_seconds=60,
         prediction_horizon_seconds=300,  # 5 minutes
         output_html_path='./eda_report.html',
         n_rows_to_profile=1000,
-        table='public.technical_indicators',
+        train_test_split_ratio=0.8,
     )
