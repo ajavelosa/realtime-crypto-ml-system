@@ -21,7 +21,7 @@ minio:
 
 externalS3:
   host: "risingwave-minio.risingwave.svc.cluster.local"
-  port: 9001
+  port: 9000
   useCredentialsInSecret: true
   existingSecret: "mlflow-minio-secret"
   existingSecretAccessKeyIDKey: "AccessKeyID"
