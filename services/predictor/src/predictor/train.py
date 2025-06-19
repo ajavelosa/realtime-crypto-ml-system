@@ -9,11 +9,12 @@ Has the following steps:
 5. Split the data into train and test
 6. Split features and target
 7. Create a baseline model
-8. XGBoost model with default hyperparameters
-9. Hyperparameter tuning with Optuna
-10. Validate the final model
-10. Push the model to MLFlow
-11. Log the model on MLFlow
+8. Find the best model candidates
+9. Select the best model from model_names
+10. Train the best model
+11. Validate the final model
+12. Push the model to MLFlow
+13. Log the model on MLFlow
 """
 
 from typing import Optional
@@ -25,9 +26,10 @@ from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
 from sklearn.metrics import mean_absolute_error
 from ydata_profiling import ProfileReport
 
+from predictor.config import training_config
 from predictor.data_validation import validate_data
 from predictor.model_registry import get_model_name
-from predictor.models import BaselineModel
+from predictor.models import BaselineModel, get_model_candidates
 
 
 def load_ts_data_from_risingwave(
@@ -124,7 +126,10 @@ def train(
     prediction_horizon_seconds: int,
     output_html_path: str,
     train_test_split_ratio: float,
+    n_model_candidates: int,
+    features: list[str],
     n_rows_to_profile: Optional[int] = None,
+    model_name: Optional[str] = None,
 ) -> None:
     """
     Train a predictor model for the given pair and data. If the model is good, push it
@@ -143,8 +148,12 @@ def train(
         candle_seconds: The number of seconds in the candle.
         prediction_horizon_seconds: The number of seconds in the prediction horizon.
         output_html_path: The path to save the HTML file to.
-        n_rows_to_profile: The number of rows to profile.
         train_test_split_ratio: The ratio of the training set to the test set.
+        n_model_candidates: The number of model candidates to find.
+        n_rows_to_profile: The number of rows to profile.
+        model_name: The name of the model to train. If None, we will find the best model candidates.
+    Returns:
+        None. Writes the model parameters, metrics, and artifacts to MLFlow.
     """
     logger.info(
         f'Starting training for {pair} for the last {training_set_size_days} days.'
@@ -172,6 +181,8 @@ def train(
     with mlflow.start_run():
         logger.info('Starting training run...')
 
+        mlflow.log_param('features', features)
+
         # Step 1: Load data from RisingWave
         logger.info('Loading data from RisingWave...')
         ts_data = load_ts_data_from_risingwave(
@@ -186,11 +197,16 @@ def train(
             table=risingwave_table,
         )
 
+        # Only keep the features we want to use
+        ts_data = ts_data[features]
+
         # Step 2: Add a target column
         ts_data['target'] = ts_data['close'].shift(
             -prediction_horizon_seconds // candle_seconds
         )
-        ts_data = ts_data.dropna()
+
+        # Drop rows with missing values
+        ts_data = ts_data.dropna(subset=['target'])
 
         # Log training dataset to MLFlow
         dataset = mlflow.data.from_pandas(ts_data)
@@ -262,21 +278,40 @@ def train(
         mlflow.log_metric('baseline_model_test_mae', test_mae_baseline)
         logger.info(f'Baseline model test MAE: {test_mae_baseline:.4f} for {pair}')
 
+        # Step 8: Find the best model candidates, if model_name is not provided.
+        if model_name is None:
+            logger.info('Training a lazy model...')
+
+            model_names = get_model_candidates(
+                X_train=X_train,
+                X_test=X_test,
+                y_train=y_train,
+                y_test=y_test,
+                n_candidates=n_model_candidates,
+            )
+
+            # TODO: this is a hack that works when we have only one candidate model
+            # How would you modify this code to use a list of candiate models, and adjust
+            # their hyperparameters in the next step?
+            model_name = model_names[0]
+
 
 if __name__ == '__main__':
     train(
-        mlflow_tracking_uri='http://localhost:5000',
-        risingwave_host='localhost',
-        risingwave_port=4567,
-        risingwave_user='root',
-        risingwave_password='123456',
-        risingwave_database='dev',
-        risingwave_table='public.technical_indicators',
-        pair='BTC/USD',
-        training_set_size_days=30,
-        candle_seconds=60,
-        prediction_horizon_seconds=300,  # 5 minutes
+        mlflow_tracking_uri=training_config.mlflow_tracking_uri,
+        risingwave_host=training_config.risingwave_host,
+        risingwave_port=training_config.risingwave_port,
+        risingwave_user=training_config.risingwave_user,
+        risingwave_password=training_config.risingwave_password,
+        risingwave_database=training_config.risingwave_database,
+        risingwave_table=training_config.risingwave_table,
+        pair=training_config.pair,
+        training_set_size_days=training_config.training_set_size_days,
+        candle_seconds=training_config.candle_seconds,
+        prediction_horizon_seconds=training_config.prediction_horizon_seconds,  # 5 minutes
         output_html_path='./eda_report.html',
-        n_rows_to_profile=1000,
-        train_test_split_ratio=0.8,
+        n_rows_to_profile=training_config.n_rows_to_profile,
+        train_test_split_ratio=training_config.train_test_split_ratio,
+        n_model_candidates=training_config.n_model_candidates,
+        features=training_config.features,
     )
