@@ -68,7 +68,7 @@ metadata:
   labels:
     app: candles-historical
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: candles-historical
@@ -120,7 +120,7 @@ metadata:
   labels:
     app: technical-indicators-historical
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: technical-indicators-historical

@@ -16,7 +16,7 @@ class TrainingConfig(BaseSettings):
     pair: str = 'BTC/USD'
     training_set_size_days: int = 10
     candle_seconds: int = 60
-    prediction_horizon_seconds: int = 300  # 5 minutes
+    prediction_horizon_seconds: int = 3600  # 1 hour
     output_html_path: str = './eda_report.html'
     n_rows_to_profile: int = 1000
     train_test_split_ratio: float = 0.8
@@ -45,6 +45,10 @@ class TrainingConfig(BaseSettings):
         'macdhist_7',
         'obv',
     ]
+    hyperparam_search_trials: int = 10
+    hyperparam_splits: int = 3
+    max_percent_diff_wrt_baseline: float = 0.10
+    max_percentage_rows_with_null_values: float = 0.05
 
 
 training_config = TrainingConfig()

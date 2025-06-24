@@ -2,19 +2,17 @@
 The training script for the predictor service.
 
 Has the following steps:
-1. Fetch data from RisingWave
+1. Load data from RisingWave
 2. Add a target column
 3. Validate the data
 4. Profile the data
 5. Split the data into train and test
 6. Split features and target
-7. Create a baseline model
+7. Train a dummy baseline model
 8. Find the best model candidates
-9. Select the best model from model_names
-10. Train the best model
-11. Validate the final model
-12. Push the model to MLFlow
-13. Log the model on MLFlow
+9. Train the best model with hyperparameter search
+10. Validate the model
+11. Push the model to the model registry
 """
 
 from typing import Optional
@@ -28,8 +26,8 @@ from ydata_profiling import ProfileReport
 
 from predictor.config import training_config
 from predictor.data_validation import validate_data
-from predictor.model_registry import get_model_name
-from predictor.models import BaselineModel, get_model_candidates
+from predictor.model_registry import get_model_name, push_model
+from predictor.models import BaselineModel, get_model_candidates, get_model_object
 
 
 def load_ts_data_from_risingwave(
@@ -130,6 +128,10 @@ def train(
     features: list[str],
     n_rows_to_profile: Optional[int] = None,
     model_name: Optional[str] = None,
+    hyperparam_search_trials: Optional[int] = None,
+    hyperparam_splits: Optional[int] = None,
+    max_percent_diff_wrt_baseline: float = 0.10,
+    max_percentage_rows_with_null_values: float = 0.05,
 ) -> None:
     """
     Train a predictor model for the given pair and data. If the model is good, push it
@@ -220,6 +222,7 @@ def train(
             ts_data=ts_data,
             prediction_horizon_seconds=prediction_horizon_seconds,
             candle_seconds=candle_seconds,
+            max_percentage_rows_with_null_values=max_percentage_rows_with_null_values,
         )
 
         # Step 4: Profile the data
@@ -290,10 +293,42 @@ def train(
                 n_candidates=n_model_candidates,
             )
 
-            # TODO: this is a hack that works when we have only one candidate model
-            # How would you modify this code to use a list of candiate models, and adjust
-            # their hyperparameters in the next step?
             model_name = model_names[0]
+
+        model = get_model_object(model_name)
+
+        # Step 9: Train the best model with hyperparameter search
+        logger.info(f'Training the {model_name} model with hyperparameter search...')
+        model.fit(
+            X_train,
+            y_train,
+            hyperparam_search_trials=hyperparam_search_trials,
+            hyperparam_splits=hyperparam_splits,
+        )
+
+        # Step 10: Validate the model
+        logger.info(f'Validating the {model_name} model...')
+        y_pred = model.predict(X_test)
+        test_mae = mean_absolute_error(y_test, y_pred)
+        mlflow.log_metric('test_mae', test_mae)
+        logger.info(f'{model_name} model test MAE: {test_mae:.4f} for {pair}')
+
+        # Step 11: Push the model to the model registry
+        mae_percent_diff = (test_mae - test_mae_baseline) / test_mae_baseline
+        if mae_percent_diff <= max_percent_diff_wrt_baseline:
+            logger.info(
+                f'Model MAE is {mae_percent_diff:.4f} < {max_percent_diff_wrt_baseline}'
+            )
+            logger.info('Pushing model to the registry')
+            model_name = get_model_name(
+                pair, candle_seconds, prediction_horizon_seconds
+            )
+            push_model(model, X_test, model_name)
+        else:
+            logger.info(
+                f'The model {model_name} MAE is {mae_percent_diff:.4f} > {max_percent_diff_wrt_baseline}'
+            )
+            logger.info('Model NOT PUSHED to the registry')
 
 
 if __name__ == '__main__':
@@ -308,10 +343,14 @@ if __name__ == '__main__':
         pair=training_config.pair,
         training_set_size_days=training_config.training_set_size_days,
         candle_seconds=training_config.candle_seconds,
-        prediction_horizon_seconds=training_config.prediction_horizon_seconds,  # 5 minutes
+        prediction_horizon_seconds=training_config.prediction_horizon_seconds,
         output_html_path='./eda_report.html',
         n_rows_to_profile=training_config.n_rows_to_profile,
         train_test_split_ratio=training_config.train_test_split_ratio,
         n_model_candidates=training_config.n_model_candidates,
         features=training_config.features,
+        hyperparam_search_trials=training_config.hyperparam_search_trials,
+        hyperparam_splits=training_config.hyperparam_splits,
+        max_percent_diff_wrt_baseline=training_config.max_percent_diff_wrt_baseline,
+        max_percentage_rows_with_null_values=training_config.max_percentage_rows_with_null_values,
     )

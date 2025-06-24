@@ -7,6 +7,7 @@ def validate_data(
     ts_data: pd.DataFrame,
     prediction_horizon_seconds: int,
     candle_seconds: int,
+    max_percentage_rows_with_null_values: float,
 ) -> pd.DataFrame:
     """
     Validates the data by checking for missing values and duplicates. We
@@ -25,6 +26,19 @@ def validate_data(
         raise ValueError(
             'Prediction horizon seconds must be a multiple of candle seconds'
         )
+
+    # Check for missing values
+    ts_data_without_nans = ts_data.dropna()
+    perc_row_with_null_values = (len(ts_data) - len(ts_data_without_nans)) / len(
+        ts_data
+    )
+    if perc_row_with_null_values > max_percentage_rows_with_null_values:
+        raise Exception(
+            'ts_data has too many rows with null values. Aborting the training script'
+        )
+
+    # We proceed with the dataset without nans
+    ts_data = ts_data_without_nans
 
     # Create a great_expectations context
     context = gx.get_context()
