@@ -75,7 +75,12 @@ echo "Installing MLFlow..."
 chmod 755 ./install_mlflow.sh
 ./install_mlflow.sh
 
-# 13. Create namespace for services
+# 13. Setup MLFlow database and user
+echo "Setting up MLFlow database and user..."
+chmod 755 ./setup-mlflow-db.sh
+./setup-mlflow-db.sh
+
+# 14. Create namespace for services
 echo "Creating namespaces..."
 kubectl create namespace services
 
