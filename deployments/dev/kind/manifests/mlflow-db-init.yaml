@@ -17,7 +17,9 @@ spec:
           echo "Setting up MLFlow database and user..."
           PGPASSWORD=postgres psql -h risingwave-postgresql.risingwave.svc.cluster.local -U postgres -c "CREATE USER mlflow WITH PASSWORD 'mlflow';" || echo "User mlflow already exists"
           PGPASSWORD=postgres psql -h risingwave-postgresql.risingwave.svc.cluster.local -U postgres -c "CREATE DATABASE mlflow OWNER mlflow;" || echo "Database mlflow already exists"
+          PGPASSWORD=postgres psql -h risingwave-postgresql.risingwave.svc.cluster.local -U postgres -c "CREATE DATABASE mlflow_auth OWNER mlflow;" || echo "Database mlflow_auth already exists"
           PGPASSWORD=postgres psql -h risingwave-postgresql.risingwave.svc.cluster.local -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE mlflow TO mlflow;" || echo "Privileges already granted"
+          PGPASSWORD=postgres psql -h risingwave-postgresql.risingwave.svc.cluster.local -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE mlflow_auth TO mlflow;" || echo "Auth privileges already granted"
           echo "Database setup complete!"
         env:
         - name: PGPASSWORD

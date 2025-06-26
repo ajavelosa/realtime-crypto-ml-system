@@ -1,30 +1,15 @@
 #!/bin/zsh
 
-# Install zsh and set it as default shell
-apt-get update && apt-get install -y zsh build-essential wget
-chsh -s $(which zsh)
-
-# Install ta-lib
-cd /tmp
-wget https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-src.tar.gz
-tar -xzf ta-lib-0.6.4-src.tar.gz
-cd ta-lib-0.6.4/
-./configure --prefix=/usr
-make -j$(nproc)
-make install
-cd ..
-rm -rf ta-lib-0.6.4-src.tar.gz ta-lib-0.6.4/
+# Set certificate paths for tools
+export MISE_SSL_CERT_FILE=/usr/local/share/ca-certificates/zscaler_root_ca.crt
 
 # Return to workspace directory
 cd /workspaces/real-time-ml-system-4
 
-# Install tools specified in mise.toml
-
-# Set certificate paths for tools
-export MISE_SSL_CERT_FILE=/usr/local/share/ca-certificates/zscaler_root_ca.crt
-
+# Source environment
 source .env.local
 
+# Install mise tools (streamlined list)
 mise trust
 GITHUB_TOKEN=${GITHUB_TOKEN} mise install
 
@@ -49,6 +34,14 @@ git config --global core.pager "cat"
 
 # Configure zsh with mise
 echo 'eval "$(/usr/local/bin/mise activate zsh)"' >> ~/.zshrc
+
+# Clean up caches to reduce container size
+echo "🧹 Cleaning up caches to reduce container size..."
+apt-get clean 2>/dev/null || true
+pip cache purge 2>/dev/null || true
+uv cache clean 2>/dev/null || true
+
+echo "✅ Devcontainer setup complete!"
 
 # Start a new zsh session
 exec zsh

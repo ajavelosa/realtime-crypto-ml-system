@@ -70,15 +70,16 @@ echo "Installing Metrics Server..."
 chmod 755 ./install_metrics_server.sh
 ./install_metrics_server.sh
 
-# 12. Install MLFlow
+# 12. Setup MLFlow database and user
+echo "Setting up MLFlow database and user..."
+chmod 755 ./setup_mlflow_db.sh
+./setup_mlflow_db.sh
+kubectl wait --for=condition=complete job/mlflow-db-init -n mlflow --timeout=300s
+
+# 13. Install MLFlow
 echo "Installing MLFlow..."
 chmod 755 ./install_mlflow.sh
 ./install_mlflow.sh
-
-# 13. Setup MLFlow database and user
-echo "Setting up MLFlow database and user..."
-chmod 755 ./setup-mlflow-db.sh
-./setup-mlflow-db.sh
 
 # 14. Create namespace for services
 echo "Creating namespaces..."
