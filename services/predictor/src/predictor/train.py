@@ -18,6 +18,7 @@ Has the following steps:
 from typing import Optional
 
 import mlflow
+import mlflow.data
 import pandas as pd
 from loguru import logger
 from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
@@ -78,6 +79,7 @@ def load_ts_data_from_risingwave(
     """
 
     ts_data = rw.fetch(query, format=OutputFormat.DATAFRAME)
+    assert isinstance(ts_data, pd.DataFrame), 'Expected DataFrame from RisingWave'
     logger.info(
         f'Fetched {len(ts_data)} rows for {pair} in the last {training_set_size_days} days from RisingWave'
     )
@@ -183,7 +185,19 @@ def train(
     with mlflow.start_run():
         logger.info('Starting training run...')
 
+        # Input to the training process
         mlflow.log_param('features', features)
+        mlflow.log_param('pair', pair)
+        mlflow.log_param('training_data_horizon_days', training_set_size_days)
+        mlflow.log_param('candle_seconds', candle_seconds)
+        mlflow.log_param('prediction_horizon_seconds', prediction_horizon_seconds)
+        mlflow.log_param('train_test_split_ratio', train_test_split_ratio)
+        mlflow.log_param('data_profiling_n_rows', n_rows_to_profile)
+        if model_name:
+            mlflow.log_param('model_name', model_name)
+        mlflow.log_param(
+            'max_percentage_diff_mae_wrt_baseline', max_percent_diff_wrt_baseline
+        )
 
         # Step 1: Load data from RisingWave
         logger.info('Loading data from RisingWave...')
@@ -211,7 +225,7 @@ def train(
         ts_data = ts_data.dropna(subset=['target'])
 
         # Log training dataset to MLFlow
-        dataset = mlflow.data.from_pandas(ts_data)
+        dataset = mlflow.data.from_pandas(ts_data)  # type: ignore[attr-defined]
         mlflow.log_input(dataset, context='training')
 
         # Log dataset size
@@ -267,9 +281,9 @@ def train(
         mlflow.log_param('y_test_shape', y_test.shape)
 
         # Log train and test data to MLFlow
-        train_dataset = mlflow.data.from_pandas(X_train)
+        train_dataset = mlflow.data.from_pandas(X_train)  # type: ignore[attr-defined]
         mlflow.log_input(train_dataset, context='training')
-        test_dataset = mlflow.data.from_pandas(X_test)
+        test_dataset = mlflow.data.from_pandas(X_test)  # type: ignore[attr-defined]
         mlflow.log_input(test_dataset, context='test')
 
         # Step 7: Train a dummy baseline model
@@ -295,6 +309,12 @@ def train(
 
             model_name = model_names[0]
 
+        # TODO: Train multiple models with the count
+        # with the count being n_model_candidates
+        # We need to split the test data further into
+        # 2 sets so that we can validate the top models
+        # against the first set and baseline the top
+        # model (winner) against the second set.
         model = get_model_object(model_name)
 
         # Step 9: Train the best model with hyperparameter search

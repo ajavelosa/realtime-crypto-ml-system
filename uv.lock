@@ -1953,6 +1953,7 @@ dependencies = [
     { name = "numpy" },
     { name = "optuna" },
     { name = "psycopg2-binary" },
+    { name = "pydantic-settings" },
     { name = "risingwave-py" },
     { name = "scikit-learn" },
 ]
@@ -1966,6 +1967,7 @@ dev = [
 training = [
     { name = "great-expectations" },
     { name = "lazypredict" },
+    { name = "setuptools" },
     { name = "ydata-profiling" },
 ]
 
@@ -1981,8 +1983,10 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "optuna", specifier = ">=4.4.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.9" },
+    { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "risingwave-py", specifier = ">=0.0.2" },
     { name = "scikit-learn", specifier = ">=1.7.0" },
+    { name = "setuptools", marker = "extra == 'training'", specifier = ">=69.0.0" },
     { name = "ydata-profiling", marker = "extra == 'training'", specifier = ">=4.16.1" },
 ]
 provides-extras = ["training", "dev"]
@@ -2741,6 +2745,7 @@ source = { editable = "services/technical-indicators" }
 dependencies = [
     { name = "loguru" },
     { name = "numpy" },
+    { name = "psycopg2-binary" },
     { name = "pydantic-settings" },
     { name = "quixstreams" },
     { name = "risingwave-py" },
@@ -2755,6 +2760,7 @@ talib = [
 requires-dist = [
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "numpy", specifier = ">=1.26.0" },
+    { name = "psycopg2-binary", specifier = ">=2.9.9" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
     { name = "quixstreams", specifier = ">=3.13.1" },
     { name = "risingwave-py", specifier = ">=0.0.2" },

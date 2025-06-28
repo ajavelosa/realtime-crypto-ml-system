@@ -13,6 +13,7 @@ dependencies = [
     "quixstreams>=3.13.1",
     "risingwave-py>=0.0.2",
     "pydantic-settings>=2.0.0",
+    "psycopg2-binary>=2.9.9",
 ]
 
 [project.optional-dependencies]

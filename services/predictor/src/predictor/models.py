@@ -38,14 +38,17 @@ HOW TO CREATE HYPERPARAMETER-TUNED MODEL SUBCLASSES:
    Model = Union['YourModelWithHyperparameterTuning', ...]
    ```
 
-DYNAMIC MODEL IMPORT:
-    If a model is not found in predefined models, the system will automatically:
-    1. Try to import it from sklearn.linear_model first
-    2. If not found, try sklearn.ensemble second
+SUPPORTED MODELS:
+    Only predefined models with hyperparameter tuning are supported. If you need a new model,
+    create a new subclass following the template above.
 
-    Examples of supported models:
-    - sklearn.linear_model: Ridge, Lasso, ElasticNet, RANSACRegressor, etc.
-    - sklearn.ensemble: RandomForestRegressor, GradientBoostingRegressor, etc.
+    Available models:
+    - LinearRegression: Linear regression with hyperparameter tuning
+    - OrthogonalMatchingPursuit: Orthogonal matching pursuit with hyperparameter tuning
+    - HuberRegressor: Huber regression with hyperparameter tuning
+    - SGDRegressor: Stochastic gradient descent with hyperparameter tuning
+    - RandomForestRegressor: Random forest with hyperparameter tuning (no scaling)
+    - PassiveAggressiveRegressor: Passive aggressive regression with hyperparameter tuning
 
 WHEN TO USE STANDARDSCALER:
     - ✅ USE SCALING for: Linear models, SVM, Neural Networks, Gradient Descent
@@ -76,7 +79,6 @@ AVAILABLE MODELS:
     - TemplateModelWithHyperparameterTuning (template for new models)
 """
 
-import importlib
 import os
 from typing import Optional, Union
 
@@ -89,6 +91,7 @@ from loguru import logger
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import (
     HuberRegressor,
+    LarsCV,
     LinearRegression,
     OrthogonalMatchingPursuit,
     PassiveAggressiveRegressor,
@@ -128,7 +131,7 @@ class BaselineModel:
         Returns:
             The predicted target.
         """
-        return X['close']
+        return pd.Series(X['close'])
 
 
 class ModelWithHyperparameterTuning:
@@ -269,7 +272,7 @@ class ModelWithHyperparameterTuning:
             params = self._sample_hyperparameters(trial)
 
             # Split the training data into n_splits folds using a TimeSeriesSplit
-            tscv = TimeSeriesSplit(n_splits=self.hyperparam_splits)
+            tscv = TimeSeriesSplit(n_splits=self.hyperparam_splits or 1)
             mae_scores = []
 
             for train_index, val_index in tscv.split(X_train):
@@ -295,7 +298,7 @@ class ModelWithHyperparameterTuning:
                 mae_scores.append(mae)
 
             # Return the average MAE across all folds
-            return np.mean(mae_scores)
+            return float(np.mean(mae_scores))
 
         return objective
 
@@ -398,6 +401,30 @@ class OrthogonalMatchingPursuitWithHyperparameterTuning(ModelWithHyperparameterT
         }
 
 
+class LarsCVWithHyperparameterTuning(ModelWithHyperparameterTuning):
+    """
+    LarsCV with hyperparameter tuning.
+    """
+
+    def __init__(self):
+        super().__init__(model_class=LarsCV)
+
+    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
+        """
+        Sample hyperparameters for the LarsCV model.
+        """
+        return {
+            'max_n_alphas': trial.suggest_int('max_n_alphas', 10, 100),
+            'eps': trial.suggest_float('eps', 1e-4, 1e-1, step=1e-4),
+            'fit_intercept': trial.suggest_categorical('fit_intercept', [True, False]),
+            'copy_X': trial.suggest_categorical('copy_X', [True, False]),
+            'n_jobs': trial.suggest_categorical('n_jobs', [-1, 1]),
+            'precompute': trial.suggest_categorical('precompute', [True, False]),
+            'max_iter': trial.suggest_int('max_iter', 100, 1000),
+            'cv': trial.suggest_int('cv', 2, 10),
+        }
+
+
 # Template for creating new hyperparameter-tuned model subclasses
 class TemplateModelWithHyperparameterTuning(ModelWithHyperparameterTuning):
     """
@@ -459,7 +486,7 @@ class LinearRegressionWithHyperparameterTuning(ModelWithHyperparameterTuning):
         return {
             'fit_intercept': trial.suggest_categorical('fit_intercept', [True, False]),
             'copy_X': trial.suggest_categorical('copy_X', [True, False]),
-            'n_jobs': trial.suggest_int('n_jobs', -1, 1),
+            'n_jobs': trial.suggest_categorical('n_jobs', [-1, 1]),
             'positive': trial.suggest_categorical('positive', [True, False]),
         }
 
@@ -581,20 +608,23 @@ Model = Union[
     'SGDRegressorWithHyperparameterTuning',
     'RandomForestWithHyperparameterTuning',
     'PassiveAggressiveRegressorWithHyperparameterTuning',
-    str,
+    'LarsCVWithHyperparameterTuning',
 ]
 
 
 def get_model_object(model_name: str) -> Model:
     """
     Get the model object based on the model name.
-    If the model is not found in our predefined models, it will try to import it from sklearn.
+    Only predefined models are supported.
 
     Args:
         model_name: str, the name of the model
 
     Returns:
         Model, the model object
+
+    Raises:
+        NotImplementedError: If the model is not among the available predefined models
     """
     # Predefined model mappings
     predefined_models = {
@@ -604,42 +634,15 @@ def get_model_object(model_name: str) -> Model:
         'SGDRegressor': SGDRegressorWithHyperparameterTuning,
         'RandomForestRegressor': RandomForestWithHyperparameterTuning,
         'PassiveAggressiveRegressor': PassiveAggressiveRegressorWithHyperparameterTuning,
+        'LarsCV': LarsCVWithHyperparameterTuning,
     }
 
-    # Try to get from predefined models first
+    # Try to get from predefined models
     if model_name in predefined_models:
         return predefined_models[model_name]()
 
-    # Try to dynamically import from sklearn
-    logger.info(
-        f'Model {model_name} not found in predefined models. Trying to import from sklearn...'
-    )
-
-    # Try common sklearn modules
-    sklearn_modules = [
-        'sklearn.linear_model',
-        'sklearn.ensemble',
-        'sklearn.svm',
-        'sklearn.neighbors',
-        'sklearn.tree',
-        'sklearn.neural_network',
-        'sklearn.gaussian_process',
-        'sklearn.kernel_ridge',
-        'sklearn.isotonic',
-        'sklearn.cross_decomposition',
-    ]
-
-    for module_name in sklearn_modules:
-        try:
-            module = importlib.import_module(module_name)
-            model_class = getattr(module, model_name)
-            logger.info(f'Found {model_name} in {module_name}')
-            return model_class()
-        except (ImportError, AttributeError):
-            continue
-
-    # If we get here, the model wasn't found in any of the tried modules
-    raise ValueError(
-        f'Model {model_name} not found in any of the following sklearn modules: {", ".join(sklearn_modules)}. '
-        f'Please ensure the model name is correct and the model is available in one of these modules.'
+    # If model not found, raise NotImplementedError
+    available_models = list(predefined_models.keys())
+    raise NotImplementedError(
+        f'Model "{model_name}" is not implemented. Available models: {", ".join(available_models)}'
     )

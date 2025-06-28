@@ -36,7 +36,7 @@ def push_model(
     logger.info(f'Pushing model {model_name} to the model registry')
     mlflow.sklearn.log_model(
         sk_model=model,
-        artifact_path='model',
+        name=model_name,
         signature=signature,
         registered_model_name=model_name,
     )

@@ -97,3 +97,32 @@ def validate_data(
         raise ValueError('Data validation failed')
 
     return ts_data
+
+
+def generate_data_drift_report(
+    ts_data: pd.DataFrame,
+    model_name: str,
+):
+    """ """
+    # Use the mlflow sdk to get the experiment name/id for the last model in the model registry
+    # TODO
+
+    # Download the ts_data used by the model
+    # TODO
+
+    # Now you have the current run `ts_data` and the `ts_data` used by the last model in the model registry.
+
+    # Use a library like Evidently to generate a data drift report. See Github: https://github.com/evidentlyai/evidently.
+    # '''
+    # Run the Data Drift evaluation preset that will test for shift in column distributions. Take the first 60 rows of the dataframe as "current" data and the following as reference. Get the output in Jupyter notebook:
+
+    # report = Report([
+    #     DataDriftPreset(method="psi")
+    # ],
+    # include_tests="True")
+    # my_eval = report.run(iris_frame.iloc[:60], iris_frame.iloc[60:])
+    # my_eval
+    # '''
+
+    # Save the report to the MLflow experiment
+    # TODO

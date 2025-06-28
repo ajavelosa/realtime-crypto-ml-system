@@ -12,14 +12,16 @@ dependencies = [
     "mlflow>=3.1.1",
     "scikit-learn>=1.7.0",
     "optuna>=4.4.0",
+    "pydantic-settings>=2.9.1",
 ]
 
 [project.optional-dependencies]
 # Heavy training/analysis dependencies - only for training-pipeline
 training = [
-    "great-expectations>=0.18.0",  # Data validation framework
-    "ydata-profiling>=4.16.1",     # Automated data profiling
-    "lazypredict>=0.2.16",         # Multi-model comparison
+    "great-expectations>=0.18.0",
+    "lazypredict>=0.2.16",
+    "ydata-profiling>=4.16.1",
+    "setuptools>=69.0.0",
 ]
 
 # Development dependencies with Jupyter ecosystem

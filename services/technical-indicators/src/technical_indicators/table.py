@@ -3,19 +3,6 @@ from pathlib import Path
 from loguru import logger
 from risingwave import RisingWave, RisingWaveConnOptions
 
-# Manual dialect registration - required because sqlalchemy-risingwave doesn't auto-register
-try:
-    from sqlalchemy import dialects
-
-    dialects.registry.register(
-        'risingwave', 'sqlalchemy_risingwave.psycopg2', 'RisingWaveDialect_psycopg2'
-    )
-    logger.info('Successfully registered RisingWave SQLAlchemy dialect')
-except ImportError as e:
-    logger.error(f'Failed to import sqlalchemy-risingwave: {e}')
-except Exception as e:
-    logger.error(f'Failed to register RisingWave dialect: {e}')
-
 
 def create_table_in_risingwave(
     table_name: str,
