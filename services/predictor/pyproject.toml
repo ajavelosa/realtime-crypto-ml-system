@@ -7,14 +7,26 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "risingwave-py>=0.0.2",
     "psycopg2-binary>=2.9.9",
-    "great-expectations>=0.18.0",
     "numpy>=1.26.0",
-    "ydata-profiling>=4.16.1",
     "loguru>=0.7.3",
-    "mlflow>=2.22.1",
+    "mlflow>=3.1.1",
     "scikit-learn>=1.7.0",
-    "lazypredict>=0.2.16",
     "optuna>=4.4.0",
+]
+
+[project.optional-dependencies]
+# Heavy training/analysis dependencies - only for training-pipeline
+training = [
+    "great-expectations>=0.18.0",  # Data validation framework
+    "ydata-profiling>=4.16.1",     # Automated data profiling
+    "lazypredict>=0.2.16",         # Multi-model comparison
+]
+
+# Development dependencies with Jupyter ecosystem
+dev = [
+    "jupyter>=1.0.0",
+    "notebook>=7.0.0",
+    "ipython>=8.0.0",
 ]
 
 [build-system]

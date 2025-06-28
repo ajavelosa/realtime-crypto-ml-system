@@ -1,122 +1,37 @@
-# ==========================================
-# STAGE 1: Build Environment (Heavy)
-# ==========================================
-FROM python:3.12-slim-bookworm AS builder
+# Minimal base image: Python 3.12 + uv preinstalled from astral-sh
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# Certificate setup for builder stage
+# Set environment variables for optimal Python and uv behavior
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
+# Certificate setup for corporate environment
 COPY .devcontainer/zscaler_root_ca.crt /usr/local/share/ca-certificates/zscaler_root_ca.crt
 RUN update-ca-certificates && \
     ln -sf /usr/local/share/ca-certificates/zscaler_root_ca.crt /usr/local/share/ca-certificates/ca-certificates.crt
 
-# Environment variables for certificates
-ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
-    UV_CERT=/etc/ssl/certs/ca-certificates.crt \
-    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
-    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    build-essential \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
-
-# Compile ta-lib from source
-RUN wget https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-src.tar.gz && \
-    tar -xzf ta-lib-0.6.4-src.tar.gz && \
-    cd ta-lib-0.6.4/ && \
-    ./configure --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make install && \
-    cd .. && \
-    rm -rf ta-lib-0.6.4-src.tar.gz ta-lib-0.6.4/ && \
-    ldconfig
-
-# Install uv and create virtual environment
-RUN pip install --no-cache-dir uv
-WORKDIR /app
-
-# Create virtual environment and install only essential dependencies
-RUN uv venv /opt/venv && \
-    . /opt/venv/bin/activate && \
-    uv pip install setuptools "numpy<2.0" && \
-    uv pip install "ta-lib==0.6.3" --no-build-isolation && \
-    uv pip install \
-        "loguru>=0.7.3" \
-        "pydantic-settings>=2.9.1" \
-        "quixstreams>=3.13.1" \
-        "requests>=2.32.3" \
-        "risingwave-py" \
-        "sqlalchemy-risingwave" \
-        "psycopg2-binary" \
-        "pandas" \
-        "semver" \
-        "websocket-client>=1.8.0"
-
-# Clean up build artifacts and caches to reduce image size
-RUN . /opt/venv/bin/activate && \
-    find /opt/venv -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
-    find /opt/venv -type f -name "*.pyc" -delete && \
-    find /opt/venv -type f -name "*.pyo" -delete && \
-    find /opt/venv -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true && \
-    find /opt/venv -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
-    find /opt/venv -type d -name "test" -exec rm -rf {} + 2>/dev/null || true
-
-# ==========================================
-# STAGE 2: Runtime Environment (Slim)
-# ==========================================
-FROM python:3.12-slim-bookworm AS runtime
-
-# Certificate setup
-COPY .devcontainer/zscaler_root_ca.crt /usr/local/share/ca-certificates/zscaler_root_ca.crt
-RUN update-ca-certificates && \
-    ln -sf /usr/local/share/ca-certificates/zscaler_root_ca.crt /usr/local/share/ca-certificates/ca-certificates.crt
-
-# Environment variables for certificates and uv configuration
+# Environment variables for certificates and networking
 ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
     UV_CERT=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PATH="/opt/venv/bin:$PATH" \
-    UV_PROJECT_ENVIRONMENT=/opt/venv \
-    UV_CACHE_DIR=/tmp/uv-cache \
-    UV_NO_SYNC=1 \
-    PYTHONPATH="/app/services/trades/src:/app/services/candles/src:/app/services/technical-indicators/src"
+    PIP_DEFAULT_TIMEOUT=100 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install only runtime dependencies (no build tools)
-RUN apt-get update && apt-get install -y \
-    --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+# Create non-root user for security
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
 
-# Copy compiled ta-lib libraries and headers from builder
-COPY --from=builder /usr/local/lib/libta-lib* /usr/local/lib/
-COPY --from=builder /usr/local/lib/pkgconfig/ta-lib.pc /usr/local/lib/pkgconfig/
-COPY --from=builder /usr/local/include/ta-lib /usr/local/include/ta-lib
-
-# Update library cache
-RUN ldconfig
-
-# Copy virtual environment from builder
-COPY --from=builder /opt/venv /opt/venv
-
-# Install uv in runtime (lightweight)
-RUN pip install --no-cache-dir uv
-
-# Create non-root user for security with proper home directory
-RUN groupadd -r appuser && \
-    useradd -r -g appuser -m -d /home/appuser -s /bin/bash appuser && \
-    mkdir -p /app && \
-    chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /home/appuser
-
-# Copy complete service directories (including additional files like query.sql)
+# Set working directory
 WORKDIR /app
-COPY services/trades /app/services/trades
-COPY services/candles /app/services/candles
-COPY services/technical-indicators /app/services/technical-indicators
-RUN chown -R appuser:appuser /app
 
+# Basic labels
+LABEL maintainer="real-time-ml-system"
+LABEL description="Minimal base image with Python 3.12 + uv + corporate certificates"
+
+# Default user
 USER appuser
+
+# Note: uv and Python 3.12 are already installed and configured in this image

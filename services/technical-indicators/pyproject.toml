@@ -9,6 +9,10 @@ authors = [
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "numpy>=1.26.0",
+    "loguru>=0.7.3",
+    "quixstreams>=3.13.1",
+    "risingwave-py>=0.0.2",
+    "pydantic-settings>=2.0.0",
 ]
 
 [project.optional-dependencies]

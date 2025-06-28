@@ -23,12 +23,13 @@ RUN wget https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-
 # Runtime stage - minimal dependencies
 FROM python:3.12-slim-bookworm
 
-# Install only runtime dependencies
+# Install runtime dependencies including build tools for Python packages
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     git \
     zsh \
     curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/* \
     && chsh -s $(which zsh)
 
