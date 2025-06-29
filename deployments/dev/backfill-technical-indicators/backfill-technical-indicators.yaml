@@ -5,13 +5,13 @@ metadata:
   namespace: services
 data:
   KAFKA_BROKER_ADDRESS: "kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092"
-  TRADES_TOPIC: "trades_historical_60d"
-  CANDLES_TOPIC: "candles_historical_60d"
+  TRADES_TOPIC: "trades_historical_1d"
+  CANDLES_TOPIC: "candles_historical_1d"
   TECHNICAL_INDICATORS_TOPIC: "technical_indicators"
-  CANDLES_CONSUMER_GROUP: "candles-historical-consumer-group-60d"
-  TECHNICAL_INDICATORS_CONSUMER_GROUP: "technical-indicators-historical-consumer-group-60d"
+  CANDLES_CONSUMER_GROUP: "candles-historical-consumer-group-1d"
+  TECHNICAL_INDICATORS_CONSUMER_GROUP: "technical-indicators-historical-consumer-group-1d"
   CANDLE_SECONDS: "60"
-  LAST_N_DAYS: "60"
+  LAST_N_DAYS: "1"
   COUNT_TRADES: "1000"
 
 ---

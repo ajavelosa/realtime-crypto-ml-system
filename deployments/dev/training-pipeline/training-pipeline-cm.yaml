@@ -1,0 +1,29 @@
+# ConfigMap for the training pipeline
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: training-pipeline
+  namespace: services
+data:
+  MLFLOW_TRACKING_URI: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
+  MLFLOW_TRACKING_USERNAME: "user"
+  MLFLOW_TRACKING_PASSWORD: "6440921D-2493-42AA-BE40-428CD753D81D"
+  RISINGWAVE_HOST: "risingwave.risingwave.svc.cluster.local"
+  RISINGWAVE_PORT: "4567"
+  RISINGWAVE_USER: "root"
+  RISINGWAVE_PASSWORD: "123456"
+  RISINGWAVE_DATABASE: "dev"
+  RISINGWAVE_TABLE: "public.technical_indicators"
+  PAIR: "BTC/USD"
+  TRAINING_SET_SIZE_DAYS: "10"
+  CANDLE_SECONDS: "60"
+  PREDICTION_HORIZON_SECONDS: "3600"
+  OUTPUT_HTML_PATH: "./eda_report.html"
+  N_ROWS_TO_PROFILE: "1000"
+  TRAIN_TEST_SPLIT_RATIO: "0.8"
+  N_MODEL_CANDIDATES: "10"
+  HYPERPARAM_SEARCH_TRIALS: "10"
+  HYPERPARAM_SPLITS: "3"
+  MAX_PERCENT_DIFF_WRT_BASELINE: "0.10"
+  MAX_PERCENTAGE_ROWS_WITH_NULL_VALUES: "0.05"
