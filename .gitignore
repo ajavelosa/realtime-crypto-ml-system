@@ -226,8 +226,5 @@ anthropic.env
 kubeconfig
 ~/.kube/*
 
-# zscaler
-zscaler_root_ca.crt
-
 # secrets
 *-secret.yaml

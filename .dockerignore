@@ -4,7 +4,7 @@
 .gitattributes
 
 # Development containers and IDE
-# .devcontainer - commented out because Dockerfile.base needs zscaler cert
+# .devcontainer
 .vscode
 *.swp
 *.swo

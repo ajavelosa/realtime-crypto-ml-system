@@ -7,17 +7,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
-# Certificate setup for corporate environment
-COPY .devcontainer/zscaler_root_ca.crt /usr/local/share/ca-certificates/zscaler_root_ca.crt
-RUN update-ca-certificates && \
-    ln -sf /usr/local/share/ca-certificates/zscaler_root_ca.crt /usr/local/share/ca-certificates/ca-certificates.crt
-
-# Environment variables for certificates and networking
-ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
-    UV_CERT=/etc/ssl/certs/ca-certificates.crt \
-    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
-    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    PIP_DEFAULT_TIMEOUT=100 \
+# Environment variables for optimal pip behavior
+ENV PIP_DEFAULT_TIMEOUT=100 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Create non-root user for security
@@ -29,7 +20,7 @@ WORKDIR /app
 
 # Basic labels
 LABEL maintainer="real-time-ml-system"
-LABEL description="Minimal base image with Python 3.12 + uv + corporate certificates"
+LABEL description="Minimal base image with Python 3.12 + uv"
 
 # Default user
 USER appuser
