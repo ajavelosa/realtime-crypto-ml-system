@@ -18,4 +18,7 @@
     "ruff.enable": true,
     "ruff.lint.enable": true,
     "ruff.format.enable": true,
+    "cursorpyright.analysis.autoSearchPaths": false,
+    "cursorpyright.analysis.diagnosticMode": "off",
+    "cursorpyright.analysis.typeCheckingMode": "off",
 }

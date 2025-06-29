@@ -32,10 +32,6 @@ docker network create --subnet 172.100.0.0/16 rwml-34fa-network
 echo "Creating the cluster..."
 KIND_EXPERIMENTAL_DOCKER_NETWORK=rwml-34fa-network kind create cluster --config ./kind-with-portmapping.yaml
 
-# 5. Update certificates in the control plane
-echo "Updating certificates..."
-docker exec rwml-34fa-control-plane update-ca-certificates
-
 echo "Configuring kubectl..."
 # 6. Export the kubeconfig to ensure we have the correct port
 kind export kubeconfig --name rwml-34fa
