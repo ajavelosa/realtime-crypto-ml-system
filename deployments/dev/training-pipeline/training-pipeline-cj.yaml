@@ -9,6 +9,7 @@ metadata:
   namespace: services
 spec:
   backoffLimit: 0
+  ttlSecondsAfterFinished: 300  # Clean up 5 minutes after completion
   template:
     spec:
       restartPolicy: Never
