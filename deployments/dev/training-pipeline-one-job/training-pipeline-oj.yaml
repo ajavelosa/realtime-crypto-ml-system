@@ -17,6 +17,13 @@ spec:
         - name: training-pipeline
           image: training-pipeline:dev
           imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"      # Max 2 CPU cores
+              memory: "6Gi"     # Increased from 2Gi to 6Gi
           env:
             #
             - name: MLFLOW_TRACKING_URI
