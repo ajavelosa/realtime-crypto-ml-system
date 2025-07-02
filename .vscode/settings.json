@@ -1,9 +1,10 @@
 {
     "git.ignoreLimitWarning": true,
-    "python.languageServer": "None",
-    "python.analysis.typeCheckingMode": "off",
-    "python.analysis.autoSearchPaths": false,
-    "python.analysis.diagnosticMode": "off",
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "python.languageServer": "Default",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.diagnosticMode": "workspace",
     "python.linting.enabled": true,
     "python.linting.ruffEnabled": true,
     "python.linting.mypyEnabled": false,
@@ -34,9 +35,9 @@
     "ruff.enable": true,
     "ruff.lint.enable": true,
     "ruff.format.enable": true,
-    "cursorpyright.analysis.autoSearchPaths": false,
-    "cursorpyright.analysis.diagnosticMode": "off",
-    "cursorpyright.analysis.typeCheckingMode": "off",
+    "cursorpyright.analysis.autoSearchPaths": true,
+    "cursorpyright.analysis.diagnosticMode": "workspace",
+    "cursorpyright.analysis.typeCheckingMode": "basic",
     "yaml.schemas": {
         "kubernetes://schema/apps/v1%40deployment": "file:///workspaces/realtime-crypto-ml-system/deployments/dev/backfill-technical-indicators/backfill-technical-indicators.yaml"
     },
