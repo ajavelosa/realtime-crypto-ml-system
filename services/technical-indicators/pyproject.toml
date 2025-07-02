@@ -6,11 +6,19 @@ readme = "README.md"
 authors = [
     { name = "Anton J", email = "antonjavelosa@gmail.com" }
 ]
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    "ta-lib>=0.6.3",
+    "numpy>=1.26.0",
     "loguru>=0.7.3",
     "quixstreams>=3.13.1",
+    "risingwave-py>=0.0.2",
+    "pydantic-settings>=2.0.0",
+    "psycopg2-binary>=2.9.9",
+]
+
+[project.optional-dependencies]
+talib = [
+    "ta-lib>=0.6.3",
 ]
 
 [build-system]

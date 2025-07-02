@@ -1,25 +1,32 @@
-# Use our base image with TA-Lib pre-installed
-ARG BASE_IMAGE=base:latest
-FROM ${BASE_IMAGE}
+# Trades service - ultra-lightweight streaming service
+FROM base:latest
 
-# Install the project into `/app`
-WORKDIR /app
+USER root
 
-COPY services /app/services
+# Copy workspace files for proper dependency resolution
+COPY pyproject.toml uv.lock ./
+COPY services/ ./services/
 
-# Install the project's dependencies using the lockfile and settings
+# Install only trades package dependencies using uv workspace with debug output
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev
+    echo "=== BEFORE UV SYNC ===" && \
+    ls -la /app/.venv/ 2>/dev/null || echo "No .venv yet" && \
+    uv sync --frozen --package trades --no-dev && \
+    echo "=== AFTER UV SYNC ===" && \
+    ls -la /app/.venv/ && \
+    ls -la /app/.venv/lib/python3.12/site-packages/ | head -10 && \
+    echo "=== TESTING IMPORTS ===" && \
+    /app/.venv/bin/python -c "import quixstreams, loguru; print('✅ Dependencies installed successfully!')" && \
+    # Basic cleanup \
+    find .venv -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
+    find .venv -type f -name "*.pyc" -delete 2>/dev/null || true && \
+    echo "=== TRADES VENV SIZE ===" && du -sh .venv
 
-# Then, add the rest of the project source code and install it
-# Installing separately from its dependencies allows optimal layer caching
-ADD . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+# Set ownership for app directory
+RUN chown -R appuser:appuser /app
 
-# Run the FastAPI application by default
-# Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
-# Uses `--host 0.0.0.0` to allow access from outside the container
-CMD ["uv", "run", "/app/services/trades/src/trades/main.py"]
+USER appuser
+
+WORKDIR /app/services/trades
+
+CMD ["uv", "run", "--package", "trades", "python", "/app/services/trades/src/trades/main.py"]

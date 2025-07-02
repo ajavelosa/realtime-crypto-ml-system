@@ -1,3 +1,43 @@
 {
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "python.languageServer": "None",
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.autoSearchPaths": false,
+    "python.analysis.diagnosticMode": "off",
+    "python.linting.enabled": true,
+    "python.linting.ruffEnabled": true,
+    "python.linting.mypyEnabled": false,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": false,
+    "python.linting.banditEnabled": false,
+    "python.linting.pycodestyleEnabled": false,
+    "python.linting.pyflakesEnabled": false,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "[yaml]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.autoIndent": "advanced",
+        "editor.detectIndentation": false
+    },
+    "[yml]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.autoIndent": "advanced",
+        "editor.detectIndentation": false
+    },
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
+    "ruff.format.enable": true,
+    "cursorpyright.analysis.autoSearchPaths": false,
+    "cursorpyright.analysis.diagnosticMode": "off",
+    "cursorpyright.analysis.typeCheckingMode": "off",
+    "yaml.schemas": {
+        "kubernetes://schema/apps/v1%40deployment": "file:///workspaces/realtime-crypto-ml-system/deployments/dev/backfill-technical-indicators/backfill-technical-indicators.yaml"
+    },
 }

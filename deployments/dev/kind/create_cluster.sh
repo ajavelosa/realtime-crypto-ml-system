@@ -32,10 +32,6 @@ docker network create --subnet 172.100.0.0/16 rwml-34fa-network
 echo "Creating the cluster..."
 KIND_EXPERIMENTAL_DOCKER_NETWORK=rwml-34fa-network kind create cluster --config ./kind-with-portmapping.yaml
 
-# 5. Update certificates in the control plane
-echo "Updating certificates..."
-docker exec rwml-34fa-control-plane update-ca-certificates
-
 echo "Configuring kubectl..."
 # 6. Export the kubeconfig to ensure we have the correct port
 kind export kubeconfig --name rwml-34fa
@@ -48,6 +44,7 @@ kubectl wait --for=condition=Ready nodes --all --timeout=300s
 echo "Installing Kafka..."
 chmod +x ./install_kafka.sh
 ./install_kafka.sh
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=strimzi-cluster-operator -n kafka --timeout=300s
 
 # 8. Install Kafka UI
 echo "Installing Kafka UI..."
@@ -69,7 +66,18 @@ echo "Installing Metrics Server..."
 chmod 755 ./install_metrics_server.sh
 ./install_metrics_server.sh
 
-# 12. Create namespace for services
+# 12. Setup MLFlow database and user
+echo "Setting up MLFlow database and user..."
+chmod 755 ./setup_mlflow_db.sh
+./setup_mlflow_db.sh
+kubectl wait --for=condition=complete job/mlflow-db-init -n mlflow --timeout=300s
+
+# 13. Install MLFlow
+echo "Installing MLFlow..."
+chmod 755 ./install_mlflow.sh
+./install_mlflow.sh
+
+# 14. Create namespace for services
 echo "Creating namespaces..."
 kubectl create namespace services
 

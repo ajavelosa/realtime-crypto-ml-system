@@ -1,0 +1,153 @@
+#
+# https://kubernetes.io/docs/concepts/workloads/controllers/job/
+#
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: training-pipeline-job-aed1
+  namespace: services
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300  # Clean up 5 minutes after completion
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: training-pipeline
+          image: training-pipeline:dev
+          imagePullPolicy: Never
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"      # Max 2 CPU cores
+              memory: "6Gi"     # Increased from 2Gi to 6Gi
+          env:
+            #
+            - name: MLFLOW_TRACKING_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: MLFLOW_TRACKING_URI
+            #
+            - name: MLFLOW_TRACKING_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: MLFLOW_TRACKING_USERNAME
+            #
+            - name: MLFLOW_TRACKING_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: MLFLOW_TRACKING_PASSWORD
+            #
+            - name: RISINGWAVE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: RISINGWAVE_HOST
+            #
+            - name: RISINGWAVE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: RISINGWAVE_PORT
+            #
+            - name: RISINGWAVE_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: RISINGWAVE_USER
+            #
+            - name: RISINGWAVE_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: RISINGWAVE_PASSWORD
+            #
+            - name: RISINGWAVE_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: RISINGWAVE_DATABASE
+            #
+            - name: RISINGWAVE_TABLE
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: RISINGWAVE_TABLE
+            #
+            - name: PAIR
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: PAIR
+            #
+            - name: TRAINING_SET_SIZE_DAYS
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: TRAINING_SET_SIZE_DAYS
+            #
+            - name: CANDLE_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: CANDLE_SECONDS
+            #
+            - name: PREDICTION_HORIZON_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: PREDICTION_HORIZON_SECONDS
+            #
+            - name: OUTPUT_HTML_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: OUTPUT_HTML_PATH
+            #
+            - name: N_ROWS_TO_PROFILE
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: N_ROWS_TO_PROFILE
+            #
+            - name: TRAIN_TEST_SPLIT_RATIO
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: TRAIN_TEST_SPLIT_RATIO
+            #
+            - name: N_MODEL_CANDIDATES
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: N_MODEL_CANDIDATES
+            #
+            - name: HYPERPARAM_SEARCH_TRIALS
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: HYPERPARAM_SEARCH_TRIALS
+            #
+            - name: HYPERPARAM_SPLITS
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: HYPERPARAM_SPLITS
+            #
+            - name: MAX_PERCENT_DIFF_WRT_BASELINE
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: MAX_PERCENT_DIFF_WRT_BASELINE
+            #
+            - name: MAX_PERCENTAGE_ROWS_WITH_NULL_VALUES
+              valueFrom:
+                configMapKeyRef:
+                  name: training-pipeline
+                  key: MAX_PERCENTAGE_ROWS_WITH_NULL_VALUES

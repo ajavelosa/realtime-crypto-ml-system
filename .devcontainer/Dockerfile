@@ -1,20 +1,37 @@
-# Use slim version of the base image
-FROM python:3.12-slim-bookworm
+# Use optimized uv base image with Python 3.12
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
-# Install ca-certificates first
-RUN apt-get update && apt-get install -y ca-certificates
+# Install build dependencies for ta-lib
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy and set up Zscaler certificate
-ADD --chmod=644 zscaler_root_ca.crt /usr/local/share/ca-certificates/zscaler_root_ca.crt
-RUN update-ca-certificates
+# Install ta-lib in builder stage (optimized & cached)
+WORKDIR /tmp
+RUN wget -q https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-src.tar.gz \
+    && tar -xzf ta-lib-0.6.4-src.tar.gz \
+    && cd ta-lib-0.6.4/ \
+    && ./configure --prefix=/usr/local --quiet \
+    && make -j$(nproc) --quiet \
+    && make install --quiet \
+    && cd .. \
+    && rm -rf ta-lib-0.6.4-src.tar.gz ta-lib-0.6.4/
 
-# Set ALL SSL environment variables to use both system and custom certificates
-ENV SSL_CERT_DIR=/etc/ssl/certs \
-    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
-    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt \
-    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt
+# Runtime stage - use same optimized base
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# Install git
-RUN apt-get update && apt-get install -y git
+# Install minimal runtime dependencies (git comes from features)
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy compiled ta-lib from builder
+COPY --from=builder /usr/local/lib/libta-lib* /usr/local/lib/
+COPY --from=builder /usr/local/include/ta-lib/ /usr/local/include/ta-lib/
+RUN ldconfig
+
+# Create non-root user (optional security improvement)
+RUN useradd -m -s /bin/zsh vscode

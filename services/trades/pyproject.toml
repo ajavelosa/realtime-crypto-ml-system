@@ -6,8 +6,15 @@ readme = "README.md"
 authors = [
     { name = "Anton J", email = "antonjavelosa@gmail.com" }
 ]
-requires-python = ">=3.11,<3.12"
-dependencies = []
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "quixstreams>=3.13.1",
+    "websocket-client>=1.8.0",
+    "loguru>=0.7.3",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "requests>=2.32.3",
+]
 
 [build-system]
 requires = ["hatchling"]
