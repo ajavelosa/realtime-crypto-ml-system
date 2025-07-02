@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled ta-lib from builder
-COPY --from=builder /usr/local/lib/libta_lib* /usr/local/lib/
+COPY --from=builder /usr/local/lib/libta-lib* /usr/local/lib/
 COPY --from=builder /usr/local/include/ta-lib/ /usr/local/include/ta-lib/
 RUN ldconfig
 

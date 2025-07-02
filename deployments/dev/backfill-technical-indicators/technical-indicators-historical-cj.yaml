@@ -1,0 +1,79 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: technical-indicators-historical
+  namespace: services
+spec:
+  schedule: "0 0 * * *" # every day at midnight
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: technical-indicators-historical
+            image: technical-indicators:dev
+            imagePullPolicy: Never # Use the local image
+            env:
+            - name: KAFKA_BROKER_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: KAFKA_BROKER_ADDRESS
+            - name: KAFKA_INPUT_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: TECHNICAL_INDICATORS_KAFKA_INPUT_TOPIC
+            - name: KAFKA_OUTPUT_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: TECHNICAL_INDICATORS_KAFKA_OUTPUT_TOPIC
+            - name: KAFKA_CONSUMER_GROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: TECHNICAL_INDICATORS_KAFKA_CONSUMER_GROUP
+            - name: CANDLE_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: CANDLE_SECONDS
+            - name: RISINGWAVE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: RISINGWAVE_HOST
+            - name: RISINGWAVE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: RISINGWAVE_PORT
+            - name: RISINGWAVE_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: RISINGWAVE_USER
+            - name: RISINGWAVE_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: RISINGWAVE_DATABASE
+            - name: RISINGWAVE_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: RISINGWAVE_PASSWORD
+            - name: RISINGWAVE_TABLE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: backfill-technical-indicators-config
+                  key: RISINGWAVE_TABLE_NAME
+            resources:
+              requests:
+                cpu: "500m"
+                memory: "1Gi"
+              limits:
+                cpu: "1000m"
+                memory: "2Gi"
