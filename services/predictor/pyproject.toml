@@ -13,6 +13,8 @@ dependencies = [
     "scikit-learn>=1.7.0",
     "optuna>=4.4.0",
     "pydantic-settings>=2.9.1",
+    "shap>=0.48.0",
+    "matplotlib>=3.10.0",
 ]
 
 [project.optional-dependencies]

@@ -79,7 +79,7 @@ class PredictorConfig(BaseSettings):
     pair: str = 'BTC/USD'
     candle_seconds: int = 60
     prediction_horizon_seconds: int = 3600  # 1 hour
-    model_version: str = 'latest'
+    model_alias: str = 'champion'
 
 
 predictor_config = PredictorConfig()
