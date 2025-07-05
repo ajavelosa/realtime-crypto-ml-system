@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prediction-generator
+  namespace: services
+  labels:
+    app: prediction-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prediction-generator
+  template:
+    metadata:
+      labels:
+        app: prediction-generator
+    spec:
+      containers:
+      - name: prediction-generator
+        image: prediction-generator:dev
+        imagePullPolicy: Never # Use the local image
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - configMapRef:
+            name: prediction-generator-config

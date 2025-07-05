@@ -2,6 +2,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class TrainingConfig(BaseSettings):
+    """
+    Configuration for the training pipeline
+    """
+
     model_config = SettingsConfigDict(
         env_file='services/predictor/settings.env', env_file_encoding='utf-8'
     )
@@ -52,3 +56,30 @@ class TrainingConfig(BaseSettings):
 
 
 training_config = TrainingConfig()
+
+
+class PredictorConfig(BaseSettings):
+    """
+    Configuration for the predictor
+    """
+
+    model_config = SettingsConfigDict(
+        env_file='services/predictor/settings.env', env_file_encoding='utf-8'
+    )
+    mlflow_tracking_uri: str = 'http://localhost:5000'
+    risingwave_host: str = 'localhost'
+    risingwave_port: int = 4567
+    risingwave_user: str = 'root'
+    risingwave_password: str = '123456'
+    risingwave_schema: str = 'public'
+    risingwave_database: str = 'dev'
+    risingwave_input_table: str = 'technical_indicators'
+    risingwave_output_table: str = 'predictions'
+
+    pair: str = 'BTC/USD'
+    candle_seconds: int = 60
+    prediction_horizon_seconds: int = 3600  # 1 hour
+    model_alias: str = 'champion'
+
+
+predictor_config = PredictorConfig()

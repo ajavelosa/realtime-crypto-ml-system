@@ -19,17 +19,21 @@ from typing import Optional
 
 import mlflow
 import mlflow.data
+import mlflow.exceptions
+import mlflow.models
 import pandas as pd
 from loguru import logger
+from mlflow.tracking import MlflowClient
 from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
 from sklearn.metrics import mean_absolute_error
 from ydata_profiling import ProfileReport
 
 from predictor.config import training_config
 from predictor.data_validation import validate_data
-from predictor.model_registry import get_model_name, push_model
+from predictor.model_registry import get_model_name, validate_and_push_model_to_registry
 from predictor.models import BaselineModel, get_model_candidates, get_model_object
 
+client = MlflowClient()
 
 def load_ts_data_from_risingwave(
     host: str,
@@ -216,6 +220,10 @@ def train(
         # Only keep the features we want to use
         ts_data = ts_data[features]
 
+        # Ensure ts_data is a DataFrame (convert from numpy array if needed)
+        if not isinstance(ts_data, pd.DataFrame):
+            ts_data = pd.DataFrame(ts_data)
+
         # Step 2: Add a target column
         ts_data['target'] = ts_data['close'].shift(
             -prediction_horizon_seconds // candle_seconds
@@ -307,15 +315,23 @@ def train(
                 n_candidates=n_model_candidates,
             )
 
-            model_name = model_names[0]
-
         # TODO: Train multiple models with the count
         # with the count being n_model_candidates
         # We need to split the test data further into
         # 2 sets so that we can validate the top models
         # against the first set and baseline the top
         # model (winner) against the second set.
-        model = get_model_object(model_name)
+
+        # Loop over the available models until we are
+        # able to find one in our registry.
+        for model_name in model_names:
+            try:
+                model = get_model_object(model_name)
+            except NotImplementedError:
+                logger.error(f'Model {model_name} not found. Choosing the next best model...')
+                continue
+            else:
+                break
 
         # Step 9: Train the best model with hyperparameter search
         logger.info(f'Training the {model_name} model with hyperparameter search...')
@@ -329,26 +345,34 @@ def train(
         # Step 10: Validate the model
         logger.info(f'Validating the {model_name} model...')
         y_pred = model.predict(X_test)
-        test_mae = mean_absolute_error(y_test, y_pred)
-        mlflow.log_metric('test_mae', test_mae)
-        logger.info(f'{model_name} model test MAE: {test_mae:.4f} for {pair}')
 
-        # Step 11: Push the model to the model registry
-        mae_percent_diff = (test_mae - test_mae_baseline) / test_mae_baseline
-        if mae_percent_diff <= max_percent_diff_wrt_baseline:
-            logger.info(
-                f'Model MAE is {mae_percent_diff:.4f} < {max_percent_diff_wrt_baseline}'
-            )
-            logger.info('Pushing model to the registry')
-            model_name = get_model_name(
-                pair, candle_seconds, prediction_horizon_seconds
-            )
-            push_model(model, X_test, model_name)
-        else:
-            logger.info(
-                f'The model {model_name} MAE is {mae_percent_diff:.4f} > {max_percent_diff_wrt_baseline}'
-            )
-            logger.info('Model NOT PUSHED to the registry')
+        # Get the model name
+        model_name = get_model_name(
+            pair=pair,
+            candle_seconds=candle_seconds,
+            prediction_horizon_seconds=prediction_horizon_seconds,
+        )
+
+        # Infer signature and log the model
+        signature = mlflow.models.infer_signature(X_test, y_pred)  # type: ignore
+
+        model_info = mlflow.sklearn.log_model(  # type: ignore
+            sk_model=model,
+            name=model_name,
+            signature=signature,
+            registered_model_name=model_name,
+        )
+
+        # Step 11: Validate the model and update champion if better
+        validate_and_push_model_to_registry(
+            model_info=model_info,
+            X_test=X_test,
+            y_test=y_test,
+            test_mae_baseline=test_mae_baseline,
+            max_percent_diff_wrt_baseline=max_percent_diff_wrt_baseline,
+            model_name=model_name,
+            pair=pair,
+        )
 
 
 if __name__ == '__main__':

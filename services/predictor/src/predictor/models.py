@@ -580,9 +580,10 @@ def get_model_candidates(
 
     # fit N models with default hyperparameters
     reg = LazyRegressor(
-        verbose=0,
-        ignore_warnings=False,
+        verbose=1,  # Show progress
+        ignore_warnings=True,  # Ignore warnings to prevent crashes
         custom_metric=mean_absolute_error,
+        predictions=True,  # Return predictions for efficiency
     )
     models, _ = reg.fit(X_train, X_test, y_train, y_test)
 

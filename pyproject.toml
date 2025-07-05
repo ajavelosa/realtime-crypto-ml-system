@@ -54,3 +54,8 @@ lint.ignore = [
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "single"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.1",
+]
