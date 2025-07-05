@@ -22,6 +22,15 @@ from mlflow.tracking import MlflowClient
 
 client = MlflowClient()
 
+# TODO: Replace model name with something generic like `cryptocurrency-model`
+# and handle the other naming parameters via MLFlow tags. See documentation:
+# https://www.mlflow.org/docs/latest/ml/model-registry/
+# We can potentially use the tags to store other data such as:
+# - Pair
+# - Candle seconds
+# - Prediction horizon seconds
+# - Validation passed/failed
+
 def get_model_name(
     pair: str,
     candle_seconds: int,

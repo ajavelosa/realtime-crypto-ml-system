@@ -42,7 +42,6 @@ from predictor.model_registry import (
 
 def predict(
     mlflow_tracking_uri: str,
-    model_version: str,
     pair: str,
     candle_seconds: int,
     prediction_horizon_seconds: int,
@@ -54,19 +53,19 @@ def predict(
     risingwave_schema: str,
     risingwave_input_table: str,
     risingwave_output_table: str,
+    model_alias: str = 'champion',
 ):
     """
     Generates a new prediction as soon as new data is available in the `risingwave_input_table`.
 
     Steps:
-    1. Load the model from the MLFlow registry with the given `model_version` if provided. Otherwise, use the latest model.
+    1. Load the model from the MLFlow registry with the given `model_alias` if provided. Otherwise, use the latest model.
     2. Start listening to the `risingwave_input_table` for new data.
     3. For each new or updated row, generate a new prediction.
     4. Write the prediction to the `risingwave_output_table`.
 
     Args:
         mlflow_tracking_uri: The URI of the MLFlow tracking server.
-        model_version: The version of the model to use for prediction.
         pair: The pair to predict.
         candle_seconds: The number of seconds in a candle.
         prediction_horizon_seconds: The number of seconds to predict.
@@ -78,10 +77,11 @@ def predict(
         risingwave_schema: The schema of the RisingWave instance.
         risingwave_input_table: The input table of the RisingWave instance.
         risingwave_output_table: The output table of the RisingWave instance.
+        model_alias: The alias of the model to use for prediction.
     """
-    # Step 1: Load the model from the MLFlow registry with the given `model_version` if provided. Otherwise, use the latest model.
+    # Step 1: Load the model from the MLFlow registry with the given `model_alias` if provided. Otherwise, use the latest model.
     model_name = get_model_name(pair, candle_seconds, prediction_horizon_seconds)
-    model, features, model_version = load_model(model_name, model_version)
+    model, features, model_version = load_model(model_name, model_alias)
     logger.info(f'Loaded model: {model_name} with features: {features}')
 
     # Step 2: Start listening to the `risingwave_input_table` for new data.
@@ -165,7 +165,6 @@ def predict(
 if __name__ == '__main__':
     predict(
         mlflow_tracking_uri=predictor_config.mlflow_tracking_uri,
-        model_version=predictor_config.model_version,
         pair=predictor_config.pair,
         candle_seconds=predictor_config.candle_seconds,
         prediction_horizon_seconds=predictor_config.prediction_horizon_seconds,
@@ -177,4 +176,5 @@ if __name__ == '__main__':
         risingwave_schema=predictor_config.risingwave_schema,
         risingwave_input_table=predictor_config.risingwave_input_table,
         risingwave_output_table=predictor_config.risingwave_output_table,
+        model_alias=predictor_config.model_alias,
     )
