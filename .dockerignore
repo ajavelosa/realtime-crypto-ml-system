@@ -91,3 +91,15 @@ logs/
 *.sqlite
 *.sqlite3
 *.db
+
+# Rust cache
+target/
+
+# Rust build artifacts
+*.so
+*.dylib
+*.rlib
+*.a
+*.o
+*.lo
+*.la

@@ -7,7 +7,7 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: services
+namespace: training
 resources:
   - ./training-pipeline-cm.yaml
   - ./training-pipeline-cj.yaml

@@ -6,7 +6,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: training-pipeline-job-aed1
-  namespace: services
+  namespace: training
 spec:
   backoffLimit: 0
   ttlSecondsAfterFinished: 300  # Clean up 5 minutes after completion

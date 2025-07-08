@@ -6,7 +6,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: training-pipeline-cj-aed1
-  namespace: services
 spec:
   # For debugginb you might want to run the job more often:
   # For example:
@@ -21,7 +20,7 @@ spec:
       activeDeadlineSeconds: 3600  # Kill job after 1 hour if stuck
       template:
         spec:
-          restartPolicy: OnFailure
+          restartPolicy: Never
           containers:
           - name: training-pipeline
             image: training-pipeline:dev
