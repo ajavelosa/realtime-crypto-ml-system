@@ -1,110 +1,65 @@
 use axum::{
-    extract::Query,
-    http::StatusCode,
-    response::Json,
     routing::get,
     Router,
 };
-use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
+use log::info;
 
-#[derive(Deserialize)]
-struct PredictionParams {
-    pair: String,
+mod routes;
+mod db;
+mod config;
+
+use routes::health::health;
+use routes::predictions::get_prediction;
+use config::Config;
+
+#[derive(Clone)]
+struct AppState {
+    pool: PgPool,
+    config: Config,
 }
 
-#[derive(Serialize)]
-struct PredictionResponse {
-    pair: String,
-    predicted_ts_ms: i64,
-    predicted_price: f64,
-    status: String,
-}
-
-#[derive(Serialize)]
-struct ErrorResponse {
-    error: String,
-}
-
-// This is how you denote the entrypoint of a Rust application
+// This is how you denote the entrypoint of a Rust program that uses async with tokio
 #[tokio::main]
 async fn main() {
+    // Start the logger as early as possible as you can
+    env_logger::init();
+
+    // Load environment variables into a config struct
+    let config: Config = Config::from_env();
+
+    // Creating a single PgPool at start up
+    info!("Creating pg pool...");
+    let pool = db::get_pool(
+        &config.pg_host,
+        &config.pg_port,
+        &config.pg_database,
+        &config.pg_user,
+        &config.pg_password,
+    ).await;
+    info!("Created pg pool!");
+
+    // Create the latest_predictions materialized view at startup
+    if let Err(e) = db::create_latest_predictions_view(
+        &pool,
+        &config.pg_table_name,
+        &config.pg_view_name,
+    ).await {
+        panic!("Failed to create materialized view: {}", e);
+    }
+
+    // Creating the app state struct
+    let app_state = AppState { pool, config: config.clone() };
+
     // build our application with a route
     let app = Router::new()
-        // `GET /health` goes to `health`
+        // `GET /` goes to `root`
         .route("/health", get(health))
-        // Add an endpoint to get predictions
-        // We will use the pair as a query parameter
-        // Example: http://localhost:3001/predictions?pair=BTC/USD
-        .route("/predictions", get(get_predictions));
+        .route("/predictions", get(get_prediction))
+        .with_state(app_state);
 
     // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
-
+    // let port = env::var("PORT").unwrap_or("3009".to_string());
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", &config.api_port)).await.unwrap();
     axum::serve(listener, app).await.unwrap();
-}
-
-// basic handler that responds with a static string
-async fn health() -> &'static str {
-    "I am healthy, bruh!"
-}
-
-async fn get_predictions(
-    params: Query<PredictionParams>,
-) -> Result<Json<PredictionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let pair = &params.pair;
-
-    // 1. Connect to the database on RisingWave
-    let pool = match PgPoolOptions::new()
-        .max_connections(5)
-        .connect("postgresql://root:123456@localhost:4567/dev")
-        .await
-    {
-        Ok(pool) => pool,
-        Err(e) => {
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: format!("Database connection failed: {}", e),
-                }),
-            ));
-        }
-    };
-
-    let query = format!(r#"
-        SELECT
-            predicted_ts_ms,
-            predicted_price
-
-        FROM predictions
-        WHERE pair = '{}'
-        AND predicted_ts_ms > (EXTRACT(EPOCH FROM NOW()) * 1000) - 10000
-        ORDER BY predicted_ts_ms DESC LIMIT 1"#,
-        pair
-    );
-
-    // 2. Query the predictions for the given pair
-    let row: (i64, f64) = match sqlx::query_as(&query)
-        .fetch_one(&pool)
-        .await
-    {
-        Ok(row) => row,
-        Err(e) => {
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: format!("Database query failed: {}", e),
-                }),
-            ));
-        }
-    };
-
-    let response = PredictionResponse {
-        pair: pair.clone(),
-        predicted_ts_ms: row.0,
-        predicted_price: row.1,
-        status: "success".to_string(),
-    };
-
-    Ok(Json(response))
 }
