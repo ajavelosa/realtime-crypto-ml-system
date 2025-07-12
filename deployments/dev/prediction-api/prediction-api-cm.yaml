@@ -1,0 +1,15 @@
+# ConfigMap for the training pipeline
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prediction-api-cm
+data:
+    API_PORT: "8080"
+    PG_HOST: "risingwave.risingwave.svc.cluster.local"
+    PG_PORT: "4567"
+    PG_DATABASE: "dev"
+    PG_USER: "root"
+    PG_PASSWORD: "123456"
+    PG_VIEW_NAME: "latest_predictions"
+    RUST_LOG: "info"

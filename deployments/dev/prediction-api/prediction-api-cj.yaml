@@ -1,0 +1,32 @@
+#
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prediction-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prediction-api
+  template:
+    metadata:
+      labels:
+        app: prediction-api
+    spec:
+      containers:
+      - name: prediction-api
+        image: prediction-api:dev
+        imagePullPolicy: Never # Use the local image
+        resources:
+          requests:
+            cpu: "100m"      # Lightweight: request 0.1 CPU
+            memory: "128Mi"  # Lightweight: request 128Mi memory
+          limits:
+            cpu: "500m"      # Max 0.5 CPU
+            memory: "512Mi"  # Max 512Mi memory
+        envFrom:
+        - configMapRef:
+            name: prediction-api-cm
+      restartPolicy: Always
