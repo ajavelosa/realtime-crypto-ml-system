@@ -39,15 +39,6 @@ async fn main() {
     ).await;
     info!("Created pg pool!");
 
-    // Create the latest_predictions materialized view at startup
-    if let Err(e) = db::create_latest_predictions_view(
-        &pool,
-        &config.pg_table_name,
-        &config.pg_view_name,
-    ).await {
-        panic!("Failed to create materialized view: {}", e);
-    }
-
     // Creating the app state struct
     let app_state = AppState { pool, config: config.clone() };
 
