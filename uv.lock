@@ -1956,6 +1956,8 @@ name = "predictor"
 version = "0.1.0"
 source = { editable = "services/predictor" }
 dependencies = [
+    { name = "great-expectations" },
+    { name = "lazypredict" },
     { name = "loguru" },
     { name = "matplotlib" },
     { name = "mlflow" },
@@ -1965,7 +1967,9 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "risingwave-py" },
     { name = "scikit-learn" },
+    { name = "setuptools" },
     { name = "shap" },
+    { name = "ydata-profiling" },
 ]
 
 [package.optional-dependencies]
@@ -1988,9 +1992,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "great-expectations", specifier = ">=0.18.22" },
     { name = "great-expectations", marker = "extra == 'training'", specifier = ">=0.18.0" },
     { name = "ipython", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "jupyter", marker = "extra == 'dev'", specifier = ">=1.0.0" },
+    { name = "lazypredict", specifier = ">=0.2.16" },
     { name = "lazypredict", marker = "extra == 'training'", specifier = ">=0.2.16" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.10.0" },
@@ -2002,8 +2008,10 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "risingwave-py", specifier = ">=0.0.2" },
     { name = "scikit-learn", specifier = ">=1.7.0" },
+    { name = "setuptools", specifier = ">=80.9.0" },
     { name = "setuptools", marker = "extra == 'training'", specifier = ">=69.0.0" },
     { name = "shap", specifier = ">=0.48.0" },
+    { name = "ydata-profiling", specifier = ">=4.16.1" },
     { name = "ydata-profiling", marker = "extra == 'training'", specifier = ">=4.16.1" },
 ]
 provides-extras = ["training", "dev"]

@@ -77,9 +77,11 @@ echo "Installing MLFlow..."
 chmod 755 ./install_mlflow.sh
 ./install_mlflow.sh
 
-# 14. Create namespace for services
+# 14. Create namespace for deployments
 echo "Creating namespaces..."
 kubectl create namespace services
+kubectl create namespace inference
+kubectl create namespace training
 
 echo "Cluster setup complete!"
 echo "Kafka UI is available at http://localhost:8182"

@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prediction-api
+spec:
+  selector:
+    app.kubernetes.io/name: prediction-api
+    app.kubernetes.io/instance: prediction-api
+  ports:
+    - port: 18080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  type: ClusterIP

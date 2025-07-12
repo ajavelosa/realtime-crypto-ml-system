@@ -92,6 +92,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import (
     HuberRegressor,
     LarsCV,
+    LassoCV,
     LinearRegression,
     OrthogonalMatchingPursuit,
     PassiveAggressiveRegressor,
@@ -522,6 +523,28 @@ class RandomForestWithHyperparameterTuning(ModelWithHyperparameterTuning):
             'bootstrap': trial.suggest_categorical('bootstrap', [True, False]),
         }
 
+class LassoCVWithHyperparameterTuning(ModelWithHyperparameterTuning):
+    """
+    LassoCV with hyperparameter tuning.
+    """
+
+    def __init__(self):
+        super().__init__(model_class=LassoCV)
+
+    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
+        """
+        Sample hyperparameters for the LassoCV.
+        """
+        return {
+            'alphas': trial.suggest_int('alphas', 10, 100),  # Number of alphas to auto-generate
+            'max_iter': trial.suggest_int('max_iter', 100, 1000),
+            'tol': trial.suggest_float('tol', 1e-5, 1e-3, log=True),
+            'cv': trial.suggest_int('cv', 2, 10),
+            'fit_intercept': trial.suggest_categorical('fit_intercept', [True, False]),
+            'copy_X': trial.suggest_categorical('copy_X', [True, False]),
+            'n_jobs': trial.suggest_categorical('n_jobs', [-1, 1]),
+            'precompute': trial.suggest_categorical('precompute', [True, False]),
+        }
 
 class PassiveAggressiveRegressorWithHyperparameterTuning(ModelWithHyperparameterTuning):
     """
@@ -636,6 +659,7 @@ def get_model_object(model_name: str) -> Model:
         'RandomForestRegressor': RandomForestWithHyperparameterTuning,
         'PassiveAggressiveRegressor': PassiveAggressiveRegressorWithHyperparameterTuning,
         'LarsCV': LarsCVWithHyperparameterTuning,
+        'LassoCV': LassoCVWithHyperparameterTuning,
     }
 
     # Try to get from predefined models

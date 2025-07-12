@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -53,7 +55,8 @@ class TrainingConfig(BaseSettings):
     hyperparam_splits: int = 3
     max_percent_diff_wrt_baseline: float = 0.10
     max_percentage_rows_with_null_values: float = 0.05
-
+    model_name: Optional[str] = None
+    fallback_model_name: str = 'LinearRegression'
 
 training_config = TrainingConfig()
 

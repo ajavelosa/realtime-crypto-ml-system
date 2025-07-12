@@ -138,6 +138,7 @@ def train(
     hyperparam_splits: Optional[int] = None,
     max_percent_diff_wrt_baseline: float = 0.10,
     max_percentage_rows_with_null_values: float = 0.05,
+    fallback_model_name: str = 'LinearRegression',
 ) -> None:
     """
     Train a predictor model for the given pair and data. If the model is good, push it
@@ -304,7 +305,11 @@ def train(
         logger.info(f'Baseline model test MAE: {test_mae_baseline:.4f} for {pair}')
 
         # Step 8: Find the best model candidates, if model_name is not provided.
-        if model_name is None:
+        if model_name is not None:
+            logger.info(f'Using the provided model name: {model_name}')
+            model = get_model_object(model_name)
+
+        else:
             logger.info('Training a lazy model...')
 
             model_names = get_model_candidates(
@@ -315,23 +320,31 @@ def train(
                 n_candidates=n_model_candidates,
             )
 
-        # TODO: Train multiple models with the count
-        # with the count being n_model_candidates
-        # We need to split the test data further into
-        # 2 sets so that we can validate the top models
-        # against the first set and baseline the top
-        # model (winner) against the second set.
+            # TODO: Train multiple models with the count
+            # with the count being n_model_candidates
+            # We need to split the test data further into
+            # 2 sets so that we can validate the top models
+            # against the first set and baseline the top
+            # model (winner) against the second set.
 
-        # Loop over the available models until we are
-        # able to find one in our registry.
-        for model_name in model_names:
-            try:
+            # Loop over the available models until we are
+            # able to find one in our registry.
+            model = None
+            for model_name in model_names:
+                try:
+                    model = get_model_object(model_name)
+                    logger.info(f'Found model {model_name} in registry.')
+                except NotImplementedError:
+                    logger.error(f'Model {model_name} not found. Choosing the next best model...')
+                    continue
+                else:
+                    break
+
+            # If no valid model was found, fall back to a default model
+            if model is None:
+                logger.warning('No valid model found in candidates. Falling back to LinearRegression.')
+                model_name = fallback_model_name
                 model = get_model_object(model_name)
-            except NotImplementedError:
-                logger.error(f'Model {model_name} not found. Choosing the next best model...')
-                continue
-            else:
-                break
 
         # Step 9: Train the best model with hyperparameter search
         logger.info(f'Training the {model_name} model with hyperparameter search...')
@@ -397,4 +410,6 @@ if __name__ == '__main__':
         hyperparam_splits=training_config.hyperparam_splits,
         max_percent_diff_wrt_baseline=training_config.max_percent_diff_wrt_baseline,
         max_percentage_rows_with_null_values=training_config.max_percentage_rows_with_null_values,
+        model_name=training_config.model_name,
+        fallback_model_name=training_config.fallback_model_name,
     )

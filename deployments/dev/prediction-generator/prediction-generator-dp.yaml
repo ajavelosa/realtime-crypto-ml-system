@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prediction-generator
-  namespace: services
   labels:
     app: prediction-generator
 spec:
