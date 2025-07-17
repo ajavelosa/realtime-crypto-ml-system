@@ -4,61 +4,9 @@ Machine Learning Models with Hyperparameter Tuning
 This module provides a framework for creating machine learning models with automatic
 hyperparameter tuning using Optuna for Bayesian optimization.
 
-HOW TO CREATE HYPERPARAMETER-TUNED MODEL SUBCLASSES:
-
-1. **Inherit from ModelWithHyperparameterTuning**:
-   ```python
-   class YourModelWithHyperparameterTuning(ModelWithHyperparameterTuning):
-       def __init__(self):
-           # For models that need scaling (linear models, SVM, neural networks, etc.)
-           super().__init__(model_class=YourModelClass, use_scaler=True)
-
-           # For tree-based models (Random Forest, XGBoost, etc.)
-           super().__init__(model_class=YourModelClass, use_scaler=False)
-   ```
-
-2. **Implement _sample_hyperparameters method** (ONLY THIS METHOD IS REQUIRED):
-   ```python
-   def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-       return {
-           'param1': trial.suggest_int('param1', 1, 100),
-           'param2': trial.suggest_float('param2', 0.01, 1.0, log=True),
-           'param3': trial.suggest_categorical('param3', ['option1', 'option2']),
-       }
-   ```
-
-3. **Add to get_model_object function**:
-   ```python
-   elif model_name == 'YourModel':
-       return YourModelWithHyperparameterTuning()
-   ```
-
-4. **Update Model type union**:
-   ```python
-   Model = Union['YourModelWithHyperparameterTuning', ...]
-   ```
-
-SUPPORTED MODELS:
-    Only predefined models with hyperparameter tuning are supported. If you need a new model,
-    create a new subclass following the template above.
-
-    Available models:
-    - LinearRegression: Linear regression with hyperparameter tuning
-    - OrthogonalMatchingPursuit: Orthogonal matching pursuit with hyperparameter tuning
-    - HuberRegressor: Huber regression with hyperparameter tuning
-    - SGDRegressor: Stochastic gradient descent with hyperparameter tuning
-    - RandomForestRegressor: Random forest with hyperparameter tuning (no scaling)
-    - PassiveAggressiveRegressor: Passive aggressive regression with hyperparameter tuning
-
-WHEN TO USE STANDARDSCALER:
-    - ✅ USE SCALING for: Linear models, SVM, Neural Networks, Gradient Descent
-    - ❌ DON'T USE SCALING for: Tree-based models (Random Forest, XGBoost, Decision Trees)
-
-    Tree-based models are scale-invariant and scaling can sometimes hurt performance.
-
 USAGE:
     # Create model instance
-    model = YourModelWithHyperparameterTuning()
+    model = ModelWithHyperparameterTuning('RandomForestRegressor')
 
     # Fit with hyperparameter tuning (100 trials, 3 CV splits)
     model.fit(X_train, y_train, hyperparam_search_trials=100, hyperparam_splits=3)
@@ -70,17 +18,21 @@ USAGE:
     predictions = model.predict(X_test)
 
 AVAILABLE MODELS:
-    - LinearRegressionWithHyperparameterTuning (uses scaling)
-    - HuberRegressorWithHyperparameterTuning (uses scaling)
-    - OrthogonalMatchingPursuitWithHyperparameterTuning (uses scaling)
-    - SGDRegressorWithHyperparameterTuning (uses scaling)
-    - RandomForestWithHyperparameterTuning (no scaling - tree-based)
-    - PassiveAggressiveRegressorWithHyperparameterTuning (uses scaling)
-    - TemplateModelWithHyperparameterTuning (template for new models)
+    All models are now configured through model_hyperparameters.json:
+    - LinearRegression
+    - SGDRegressor
+    - HuberRegressor
+    - OrthogonalMatchingPursuit
+    - LarsCV
+    - RandomForestRegressor
+    - LassoCV
+    - PassiveAggressiveRegressor
 """
 
+import importlib
+import json
 import os
-from typing import Optional, Union
+from typing import Optional
 
 import mlflow
 import numpy as np
@@ -88,20 +40,37 @@ import optuna
 import pandas as pd
 from lazypredict.Supervised import LazyRegressor
 from loguru import logger
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import (
-    HuberRegressor,
-    LarsCV,
-    LassoCV,
-    LinearRegression,
-    OrthogonalMatchingPursuit,
-    PassiveAggressiveRegressor,
-    SGDRegressor,
-)
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+
+
+def _get_class_from_string(class_path: str) -> type:
+    """
+    Dynamically import a class from a string path.
+
+    Args:
+        class_path: String path to the class (e.g., 'sklearn.linear_model.LinearRegression')
+
+    Returns:
+        The class object
+    """
+    module_path, class_name = class_path.rsplit('.', 1)
+    module = importlib.import_module(module_path)
+    return getattr(module, class_name)
+
+
+def _load_model_configs() -> dict:
+    """
+    Load model configurations from the JSON file.
+
+    Returns:
+        Dictionary containing model configurations
+    """
+    config_path = os.path.join(os.path.dirname(__file__), 'model_hyperparameters.json')
+    with open(config_path, 'r') as f:
+        return json.load(f)
 
 
 class BaselineModel:
@@ -138,11 +107,28 @@ class BaselineModel:
 class ModelWithHyperparameterTuning:
     """
     Base class for models with hyperparameter tuning.
+    Loads configuration from JSON file based on model name.
     """
 
-    def __init__(self, model_class: type, use_scaler: bool = True):
-        self.model_class = model_class
-        self.use_scaler = use_scaler
+    def __init__(self, model_name: str):
+        """
+        Initialize the model with configuration loaded from JSON.
+
+        Args:
+            model_name: Name of the model to load configuration for
+        """
+        self.model_name = model_name
+        self.config = _load_model_configs()
+
+        if model_name not in self.config['models']:
+            available_models = list(self.config['models'].keys())
+            raise ValueError(f"Model '{model_name}' not found. Available models: {available_models}")
+
+        model_config = self.config['models'][model_name]
+        self.model_class = _get_class_from_string(model_config['model_class'])
+        self.use_scaler = model_config['use_scaler']
+        self.hyperparameters_config = model_config['hyperparameters']
+
         self.pipeline = self._get_pipeline()
         self.hyperparam_search_trials = None
         self.hyperparam_splits = None
@@ -269,7 +255,7 @@ class ModelWithHyperparameterTuning:
             Returns:
                 float, the mean absolute error
             """
-            # Get hyperparameters for this trial (to be implemented by subclasses)
+            # Get hyperparameters for this trial (loaded from JSON config)
             params = self._sample_hyperparameters(trial)
 
             # Split the training data into n_splits folds using a TimeSeriesSplit
@@ -305,8 +291,7 @@ class ModelWithHyperparameterTuning:
 
     def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
         """
-        Sample hyperparameters for the given trial.
-        This method should be overridden by subclasses to define specific hyperparameter spaces.
+        Sample hyperparameters for the given trial based on JSON configuration.
 
         Args:
             trial: optuna.Trial, the trial object
@@ -314,260 +299,47 @@ class ModelWithHyperparameterTuning:
         Returns:
             dict, the sampled hyperparameters
         """
-        raise NotImplementedError('Subclasses must implement _sample_hyperparameters')
+        params = {}
 
+        # First pass: sample all non-conditional parameters
+        for param_name, param_config in self.hyperparameters_config.items():
+            param_type = param_config['type']
 
-class SGDRegressorWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    Fits a SGDRegressor with hyperparameter tuning.
-    """
+            if param_type == 'categorical':
+                params[param_name] = trial.suggest_categorical(param_name, param_config['choices'])
+            elif param_type == 'int':
+                params[param_name] = trial.suggest_int(param_name, param_config['low'], param_config['high'])
+            elif param_type == 'float':
+                if 'step' in param_config:
+                    params[param_name] = trial.suggest_float(
+                        param_name,
+                        param_config['low'],
+                        param_config['high'],
+                        step=param_config['step']
+                    )
+                else:
+                    params[param_name] = trial.suggest_float(
+                        param_name,
+                        param_config['low'],
+                        param_config['high'],
+                        log=param_config.get('log', False)
+                    )
 
-    def __init__(self):
-        super().__init__(model_class=SGDRegressor)
+        # Second pass: handle conditional parameters
+        for param_name, param_config in self.hyperparameters_config.items():
+            param_type = param_config['type']
 
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for the SGDRegressor.
-        """
-        # Sample penalty first since it affects other parameters
-        penalty = trial.suggest_categorical('penalty', ['l1', 'l2', 'elasticnet'])
-
-        # Base parameters
-        params = {
-            'alpha': trial.suggest_float('alpha', 0.0001, 0.1, log=True),
-            'max_iter': trial.suggest_int('max_iter', 100, 1000),
-            'tol': trial.suggest_float('tol', 1e-5, 1e-3, log=True),
-            'learning_rate': trial.suggest_categorical(
-                'learning_rate', ['constant', 'invscaling', 'optimal', 'adaptive']
-            ),
-            'eta0': trial.suggest_float('eta0', 0.001, 1.0, log=True),
-            'penalty': penalty,
-        }
-
-        # Only add l1_ratio if penalty is elasticnet
-        if penalty == 'elasticnet':
-            params['l1_ratio'] = trial.suggest_float('l1_ratio', 0.0, 1.0)
+            if param_type == 'conditional_float':
+                # Handle conditional parameters (like l1_ratio for SGDRegressor)
+                condition = param_config['condition']
+                if condition['param'] in params and params[condition['param']] == condition['value']:
+                    params[param_name] = trial.suggest_float(
+                        param_name,
+                        param_config['low'],
+                        param_config['high']
+                    )
 
         return params
-
-
-class HuberRegressorWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    Fits a HuberRegressor with hyperparameter tuning.
-    """
-
-    def __init__(self):
-        super().__init__(model_class=HuberRegressor)
-
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for the HuberRegressor.
-
-        Args:
-            trial: optuna.Trial, the trial object
-
-        Returns:
-            dict, the sampled hyperparameters
-        """
-        return {
-            'epsilon': trial.suggest_float('epsilon', 1.0, 2.0),
-            'max_iter': trial.suggest_int('max_iter', 100, 1000),
-            'alpha': trial.suggest_float('alpha', 0.0001, 0.1, log=True),
-            'tol': trial.suggest_float('tol', 1e-5, 1e-3, log=True),
-        }
-
-
-class OrthogonalMatchingPursuitWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    Orthogonal Matching Pursuit with hyperparameter tuning.
-    """
-
-    def __init__(self):
-        super().__init__(model_class=OrthogonalMatchingPursuit)
-
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for the Orthogonal Matching Pursuit model.
-
-        Args:
-            trial: optuna.Trial, the trial object
-
-        Returns:
-            dict, the sampled hyperparameters
-        """
-        return {
-            'n_nonzero_coefs': trial.suggest_int('n_nonzero_coefs', 1, 10),
-            'tol': trial.suggest_float('tol', 1e-4, 1e-1, step=1e-4),
-            'fit_intercept': trial.suggest_categorical('fit_intercept', [True, False]),
-        }
-
-
-class LarsCVWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    LarsCV with hyperparameter tuning.
-    """
-
-    def __init__(self):
-        super().__init__(model_class=LarsCV)
-
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for the LarsCV model.
-        """
-        return {
-            'max_n_alphas': trial.suggest_int('max_n_alphas', 10, 100),
-            'eps': trial.suggest_float('eps', 1e-4, 1e-1, step=1e-4),
-            'fit_intercept': trial.suggest_categorical('fit_intercept', [True, False]),
-            'copy_X': trial.suggest_categorical('copy_X', [True, False]),
-            'n_jobs': trial.suggest_categorical('n_jobs', [-1, 1]),
-            'precompute': trial.suggest_categorical('precompute', [True, False]),
-            'max_iter': trial.suggest_int('max_iter', 100, 1000),
-            'cv': trial.suggest_int('cv', 2, 10),
-        }
-
-
-# Template for creating new hyperparameter-tuned model subclasses
-class TemplateModelWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    Template class showing how to create a new hyperparameter-tuned model.
-    Replace 'TemplateModel' with your actual model class.
-
-    NOTE: Only _sample_hyperparameters method needs to be implemented!
-    The _find_best_hyperparams method is now handled by the base class.
-    """
-
-    def __init__(self):
-        # Choose the appropriate preprocessing strategy:
-
-        # For models that NEED scaling (linear models, SVM, neural networks, etc.)
-        # from sklearn.linear_model import LinearRegression
-        # super().__init__(model_class=LinearRegression, use_scaler=True)
-
-        # For models that DON'T need scaling (tree-based models)
-        # from sklearn.ensemble import RandomForestRegressor
-        # super().__init__(model_class=RandomForestRegressor, use_scaler=False)
-
-        pass
-
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for your model.
-        Define the hyperparameter space here using trial.suggest_* methods.
-        THIS IS THE ONLY METHOD YOU NEED TO IMPLEMENT!
-
-        Args:
-            trial: optuna.Trial, the trial object
-
-        Returns:
-            dict, the sampled hyperparameters
-        """
-        return {
-            # Example hyperparameters (replace with your model's actual parameters):
-            # 'n_estimators': trial.suggest_int('n_estimators', 10, 1000),
-            # 'max_depth': trial.suggest_int('max_depth', 1, 20),
-            # 'learning_rate': trial.suggest_float('learning_rate', 0.01, 1.0, log=True),
-            # 'subsample': trial.suggest_float('subsample', 0.1, 1.0),
-        }
-
-
-class LinearRegressionWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    Linear Regression with hyperparameter tuning.
-    Note: LinearRegression has very few hyperparameters, so this is mainly for consistency.
-    """
-
-    def __init__(self):
-        super().__init__(model_class=LinearRegression)
-
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for the Linear Regression.
-        LinearRegression has very few hyperparameters.
-        """
-        return {
-            'fit_intercept': trial.suggest_categorical('fit_intercept', [True, False]),
-            'copy_X': trial.suggest_categorical('copy_X', [True, False]),
-            'n_jobs': trial.suggest_categorical('n_jobs', [-1, 1]),
-            'positive': trial.suggest_categorical('positive', [True, False]),
-        }
-
-
-# Practical example: Random Forest with hyperparameter tuning
-class RandomForestWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    Random Forest Regressor with hyperparameter tuning.
-    Tree-based models like Random Forest don't need feature scaling.
-    """
-
-    def __init__(self):
-        super().__init__(model_class=RandomForestRegressor, use_scaler=False)
-
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for the Random Forest.
-
-        Args:
-            trial: optuna.Trial, the trial object
-
-        Returns:
-            dict, the sampled hyperparameters
-        """
-        return {
-            'n_estimators': trial.suggest_int('n_estimators', 10, 500),
-            'max_depth': trial.suggest_int('max_depth', 1, 20),
-            'min_samples_split': trial.suggest_int('min_samples_split', 2, 20),
-            'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 10),
-            'max_features': trial.suggest_categorical(
-                'max_features', ['sqrt', 'log2', None]
-            ),
-            'bootstrap': trial.suggest_categorical('bootstrap', [True, False]),
-        }
-
-class LassoCVWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    LassoCV with hyperparameter tuning.
-    """
-
-    def __init__(self):
-        super().__init__(model_class=LassoCV)
-
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for the LassoCV.
-        """
-        return {
-            'alphas': trial.suggest_int('alphas', 10, 100),  # Number of alphas to auto-generate
-            'max_iter': trial.suggest_int('max_iter', 100, 1000),
-            'tol': trial.suggest_float('tol', 1e-5, 1e-3, log=True),
-            'cv': trial.suggest_int('cv', 2, 10),
-            'fit_intercept': trial.suggest_categorical('fit_intercept', [True, False]),
-            'copy_X': trial.suggest_categorical('copy_X', [True, False]),
-            'n_jobs': trial.suggest_categorical('n_jobs', [-1, 1]),
-            'precompute': trial.suggest_categorical('precompute', [True, False]),
-        }
-
-class PassiveAggressiveRegressorWithHyperparameterTuning(ModelWithHyperparameterTuning):
-    """
-    Passive Aggressive Regressor with hyperparameter tuning.
-    """
-
-    def __init__(self):
-        super().__init__(model_class=PassiveAggressiveRegressor)
-
-    def _sample_hyperparameters(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters for the Passive Aggressive Regressor.
-        """
-        return {
-            'C': trial.suggest_float('C', 0.001, 1.0, log=True),
-            'max_iter': trial.suggest_int('max_iter', 100, 1000),
-            'epsilon': trial.suggest_float('epsilon', 0.0, 1.0),
-            'tol': trial.suggest_float('tol', 1e-5, 1e-3, log=True),
-            'loss': trial.suggest_categorical(
-                'loss', ['epsilon_insensitive', 'squared_epsilon_insensitive']
-            ),
-            'fit_intercept': trial.suggest_categorical('fit_intercept', [True, False]),
-        }
 
 
 def get_model_candidates(
@@ -625,49 +397,25 @@ def get_model_candidates(
     return model_candidates
 
 
-Model = Union[
-    'LinearRegressionWithHyperparameterTuning',
-    'OrthogonalMatchingPursuitWithHyperparameterTuning',
-    'HuberRegressorWithHyperparameterTuning',
-    'SGDRegressorWithHyperparameterTuning',
-    'RandomForestWithHyperparameterTuning',
-    'PassiveAggressiveRegressorWithHyperparameterTuning',
-    'LarsCVWithHyperparameterTuning',
-]
+Model = ModelWithHyperparameterTuning
 
 
 def get_model_object(model_name: str) -> Model:
     """
     Get the model object based on the model name.
-    Only predefined models are supported.
+    Now uses the unified base class that loads configuration from JSON.
 
     Args:
         model_name: str, the name of the model
 
     Returns:
-        Model, the model object
+        ModelWithHyperparameterTuning: the model object
 
     Raises:
-        NotImplementedError: If the model is not among the available predefined models
+        ValueError: If the model is not found in the configuration
     """
-    # Predefined model mappings
-    predefined_models = {
-        'LinearRegression': LinearRegressionWithHyperparameterTuning,
-        'OrthogonalMatchingPursuit': OrthogonalMatchingPursuitWithHyperparameterTuning,
-        'HuberRegressor': HuberRegressorWithHyperparameterTuning,
-        'SGDRegressor': SGDRegressorWithHyperparameterTuning,
-        'RandomForestRegressor': RandomForestWithHyperparameterTuning,
-        'PassiveAggressiveRegressor': PassiveAggressiveRegressorWithHyperparameterTuning,
-        'LarsCV': LarsCVWithHyperparameterTuning,
-        'LassoCV': LassoCVWithHyperparameterTuning,
-    }
-
-    # Try to get from predefined models
-    if model_name in predefined_models:
-        return predefined_models[model_name]()
-
-    # If model not found, raise NotImplementedError
-    available_models = list(predefined_models.keys())
-    raise NotImplementedError(
-        f'Model "{model_name}" is not implemented. Available models: {", ".join(available_models)}'
-    )
+    try:
+        return ModelWithHyperparameterTuning(model_name)
+    except ValueError as e:
+        # Re-raise with more context
+        raise NotImplementedError(str(e)) from e

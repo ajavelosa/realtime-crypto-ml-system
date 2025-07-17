@@ -1,0 +1,274 @@
+{
+  "models": {
+    "LinearRegression": {
+      "model_class": "sklearn.linear_model.LinearRegression",
+      "use_scaler": true,
+      "hyperparameters": {
+        "fit_intercept": {
+          "type": "categorical",
+          "choices": [true, false]
+        },
+        "copy_X": {
+          "type": "categorical",
+          "choices": [true, false]
+        },
+        "n_jobs": {
+          "type": "categorical",
+          "choices": [-1, 1]
+        },
+        "positive": {
+          "type": "categorical",
+          "choices": [true, false]
+        }
+      }
+    },
+    "SGDRegressor": {
+      "model_class": "sklearn.linear_model.SGDRegressor",
+      "use_scaler": true,
+      "hyperparameters": {
+        "penalty": {
+          "type": "categorical",
+          "choices": ["l1", "l2", "elasticnet"]
+        },
+        "alpha": {
+          "type": "float",
+          "low": 0.0001,
+          "high": 0.1,
+          "log": true
+        },
+        "max_iter": {
+          "type": "int",
+          "low": 100,
+          "high": 1000
+        },
+        "tol": {
+          "type": "float",
+          "low": 1e-5,
+          "high": 1e-3,
+          "log": true
+        },
+        "learning_rate": {
+          "type": "categorical",
+          "choices": ["constant", "invscaling", "optimal", "adaptive"]
+        },
+        "eta0": {
+          "type": "float",
+          "low": 0.001,
+          "high": 1.0,
+          "log": true
+        },
+        "l1_ratio": {
+          "type": "conditional_float",
+          "condition": {"param": "penalty", "value": "elasticnet"},
+          "low": 0.0,
+          "high": 1.0
+        }
+      }
+    },
+    "HuberRegressor": {
+      "model_class": "sklearn.linear_model.HuberRegressor",
+      "use_scaler": true,
+      "hyperparameters": {
+        "epsilon": {
+          "type": "float",
+          "low": 1.0,
+          "high": 2.0
+        },
+        "max_iter": {
+          "type": "int",
+          "low": 100,
+          "high": 1000
+        },
+        "alpha": {
+          "type": "float",
+          "low": 0.0001,
+          "high": 0.1,
+          "log": true
+        },
+        "tol": {
+          "type": "float",
+          "low": 1e-5,
+          "high": 1e-3,
+          "log": true
+        }
+      }
+    },
+    "OrthogonalMatchingPursuit": {
+      "model_class": "sklearn.linear_model.OrthogonalMatchingPursuit",
+      "use_scaler": true,
+      "hyperparameters": {
+        "n_nonzero_coefs": {
+          "type": "int",
+          "low": 1,
+          "high": 10
+        },
+        "tol": {
+          "type": "float",
+          "low": 1e-4,
+          "high": 1e-1,
+          "step": 1e-4
+        },
+        "fit_intercept": {
+          "type": "categorical",
+          "choices": [true, false]
+        }
+      }
+    },
+    "LarsCV": {
+      "model_class": "sklearn.linear_model.LarsCV",
+      "use_scaler": true,
+      "hyperparameters": {
+        "max_n_alphas": {
+          "type": "int",
+          "low": 10,
+          "high": 100
+        },
+        "eps": {
+          "type": "float",
+          "low": 1e-4,
+          "high": 1e-1,
+          "step": 1e-4
+        },
+        "fit_intercept": {
+          "type": "categorical",
+          "choices": [true, false]
+        },
+        "copy_X": {
+          "type": "categorical",
+          "choices": [true, false]
+        },
+        "n_jobs": {
+          "type": "categorical",
+          "choices": [-1, 1]
+        },
+        "precompute": {
+          "type": "categorical",
+          "choices": [true, false]
+        },
+        "max_iter": {
+          "type": "int",
+          "low": 100,
+          "high": 1000
+        },
+        "cv": {
+          "type": "int",
+          "low": 2,
+          "high": 10
+        }
+      }
+    },
+    "RandomForestRegressor": {
+      "model_class": "sklearn.ensemble.RandomForestRegressor",
+      "use_scaler": false,
+      "hyperparameters": {
+        "n_estimators": {
+          "type": "int",
+          "low": 10,
+          "high": 500
+        },
+        "max_depth": {
+          "type": "int",
+          "low": 1,
+          "high": 20
+        },
+        "min_samples_split": {
+          "type": "int",
+          "low": 2,
+          "high": 20
+        },
+        "min_samples_leaf": {
+          "type": "int",
+          "low": 1,
+          "high": 10
+        },
+        "max_features": {
+          "type": "categorical",
+          "choices": ["sqrt", "log2", null]
+        },
+        "bootstrap": {
+          "type": "categorical",
+          "choices": [true, false]
+        }
+      }
+    },
+    "LassoCV": {
+      "model_class": "sklearn.linear_model.LassoCV",
+      "use_scaler": true,
+      "hyperparameters": {
+        "alphas": {
+          "type": "int",
+          "low": 10,
+          "high": 100
+        },
+        "max_iter": {
+          "type": "int",
+          "low": 100,
+          "high": 1000
+        },
+        "tol": {
+          "type": "float",
+          "low": 1e-5,
+          "high": 1e-3,
+          "log": true
+        },
+        "cv": {
+          "type": "int",
+          "low": 2,
+          "high": 10
+        },
+        "fit_intercept": {
+          "type": "categorical",
+          "choices": [true, false]
+        },
+        "copy_X": {
+          "type": "categorical",
+          "choices": [true, false]
+        },
+        "n_jobs": {
+          "type": "categorical",
+          "choices": [-1, 1]
+        },
+        "precompute": {
+          "type": "categorical",
+          "choices": [true, false]
+        }
+      }
+    },
+    "PassiveAggressiveRegressor": {
+      "model_class": "sklearn.linear_model.PassiveAggressiveRegressor",
+      "use_scaler": true,
+      "hyperparameters": {
+        "C": {
+          "type": "float",
+          "low": 0.001,
+          "high": 1.0,
+          "log": true
+        },
+        "max_iter": {
+          "type": "int",
+          "low": 100,
+          "high": 1000
+        },
+        "epsilon": {
+          "type": "float",
+          "low": 0.0,
+          "high": 1.0
+        },
+        "tol": {
+          "type": "float",
+          "low": 1e-5,
+          "high": 1e-3,
+          "log": true
+        },
+        "loss": {
+          "type": "categorical",
+          "choices": ["epsilon_insensitive", "squared_epsilon_insensitive"]
+        },
+        "fit_intercept": {
+          "type": "categorical",
+          "choices": [true, false]
+        }
+      }
+    }
+  }
+}
