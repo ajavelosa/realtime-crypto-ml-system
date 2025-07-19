@@ -23,7 +23,6 @@ class TrainingConfig(BaseSettings):
     training_set_size_days: int = 10
     candle_seconds: int = 60
     prediction_horizon_seconds: int = 3600  # 1 hour
-    output_html_path: str = './eda_report.html'
     n_rows_to_profile: int = 1000
     train_test_split_ratio: float = 0.8
     n_model_candidates: int = 10

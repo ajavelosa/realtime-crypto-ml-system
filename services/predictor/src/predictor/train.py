@@ -15,7 +15,6 @@ Has the following steps:
 11. Push the model to the model registry
 """
 
-import os
 from typing import Optional
 
 import mlflow
@@ -91,6 +90,29 @@ def load_ts_data_from_risingwave(
     return ts_data
 
 
+def generate_exploratory_data_analysis_report_html(
+    ts_data: pd.DataFrame,
+) -> str:
+    """
+    Generates an HTML string exploratory data analysis charts for the given `ts_data`
+
+    Args:
+        ts_data: The technical indicators data to profile.
+
+    Returns:
+        str: The HTML content of the EDA report.
+    """
+    logger.info('Generating exploratory data analysis report...')
+    profile = ProfileReport(
+        ts_data,
+        tsmode=True,
+        sortby='window_start_ms',
+        title='Technical indicators EDA',
+        minimal=True,
+    )
+    return profile.to_html()
+
+
 def generate_exploratory_data_analysis_report(
     ts_data: pd.DataFrame,
     output_html_path: str,
@@ -106,15 +128,9 @@ def generate_exploratory_data_analysis_report(
     Returns:
         None. Writes the HTML file to the given `output_html_path`.
     """
-    logger.info('Generating exploratory data analysis report...')
-    profile = ProfileReport(
-        ts_data,
-        tsmode=True,
-        sortby='window_start_ms',
-        title='Technical indicators EDA',
-        minimal=True,
-    )
-    profile.to_file(output_html_path)
+    html_content = generate_exploratory_data_analysis_report_html(ts_data)
+    with open(output_html_path, 'w', encoding='utf-8') as f:
+        f.write(html_content)
 
 
 def train(
@@ -129,7 +145,6 @@ def train(
     training_set_size_days: int,
     candle_seconds: int,
     prediction_horizon_seconds: int,
-    output_html_path: str,
     train_test_split_ratio: float,
     n_model_candidates: int,
     features: list[str],
@@ -157,7 +172,6 @@ def train(
         training_set_size_days: The number of days in the past to fetch the technical indicators for.
         candle_seconds: The number of seconds in the candle.
         prediction_horizon_seconds: The number of seconds in the prediction horizon.
-        output_html_path: The path to save the HTML file to.
         train_test_split_ratio: The ratio of the training set to the test set.
         n_model_candidates: The number of model candidates to find.
         n_rows_to_profile: The number of rows to profile.
@@ -253,20 +267,14 @@ def train(
         ts_data_to_profile = (
             ts_data.head(n_rows_to_profile) if n_rows_to_profile else ts_data
         )
-        logger.info('Generating EDA report...')
-        generate_exploratory_data_analysis_report(
+        logger.info('Generating EDA report and logging directly to MLFlow...')
+        eda_html_content = generate_exploratory_data_analysis_report_html(
             ts_data=ts_data_to_profile,
-            output_html_path=output_html_path,
         )
-        logger.info('Logging EDA report to MLFlow...')
-        mlflow.log_artifact(local_path=output_html_path, artifact_path='eda_report')
+        mlflow.log_text(eda_html_content, 'eda_report/eda_report.html')
         logger.info('EDA report logged to MLFlow.')
 
-        # Clean up the EDA report after logging it to MLFlow
-        if os.path.exists(output_html_path):
-            os.remove(output_html_path)
-
-        logger.info('EDA report cleaned up.')
+        # No need to clean up files anymore!
 
         # Step 5: Split the data into train and test
 
@@ -408,7 +416,6 @@ if __name__ == '__main__':
         training_set_size_days=training_config.training_set_size_days,
         candle_seconds=training_config.candle_seconds,
         prediction_horizon_seconds=training_config.prediction_horizon_seconds,
-        output_html_path='./eda_report.html',
         n_rows_to_profile=training_config.n_rows_to_profile,
         train_test_split_ratio=training_config.train_test_split_ratio,
         n_model_candidates=training_config.n_model_candidates,
