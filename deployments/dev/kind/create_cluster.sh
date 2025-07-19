@@ -44,7 +44,7 @@ kubectl wait --for=condition=Ready nodes --all --timeout=300s
 echo "Installing Kafka..."
 chmod +x ./install_kafka.sh
 ./install_kafka.sh
-kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=strimzi-cluster-operator -n kafka --timeout=300s
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=strimzi-cluster-operator -n kafka --timeout=30s
 
 # 8. Install Kafka UI
 echo "Installing Kafka UI..."
@@ -70,7 +70,7 @@ chmod 755 ./install_metrics_server.sh
 echo "Setting up MLFlow database and user..."
 chmod 755 ./setup_mlflow_db.sh
 ./setup_mlflow_db.sh
-kubectl wait --for=condition=complete job/mlflow-db-init -n mlflow --timeout=300s
+kubectl wait --for=condition=complete job/mlflow-db-init -n mlflow --timeout=30s
 
 # 13. Install MLFlow
 echo "Installing MLFlow..."

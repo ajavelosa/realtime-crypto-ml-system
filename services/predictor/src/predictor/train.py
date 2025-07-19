@@ -15,6 +15,7 @@ Has the following steps:
 11. Push the model to the model registry
 """
 
+import os
 from typing import Optional
 
 import mlflow
@@ -260,6 +261,12 @@ def train(
         logger.info('Logging EDA report to MLFlow...')
         mlflow.log_artifact(local_path=output_html_path, artifact_path='eda_report')
         logger.info('EDA report logged to MLFlow.')
+
+        # Clean up the EDA report after logging it to MLFlow
+        if os.path.exists(output_html_path):
+            os.remove(output_html_path)
+
+        logger.info('EDA report cleaned up.')
 
         # Step 5: Split the data into train and test
 
