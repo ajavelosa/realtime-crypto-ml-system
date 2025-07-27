@@ -2,44 +2,27 @@
 
 #### Table of contents
 
-- [Some general information](#some-general-information)
-- [Before the course starts](#before-the-course-starts)
-- [Sessions](#sessions)
-
-## Some general information
-
-- [What's new in this cohort?](https://www.realworldml.net/products/building-a-real-time-ml-system-together-cohort-4/categories/2157289689/posts/2186077943)
-- [Calendar](https://www.realworldml.net/products/communities/buildingrealtimemlsystemsforproduction/meetups)
-- [How to share problems and issues you face during the course?](https://www.realworldml.net/products/building-a-real-time-ml-system-together-cohort-4/categories/2157289689/posts/2186535362)
-
-## Before the course starts
-
-- [How to setup your development environment](lessons/00_how_to_setup_your_development_environment.md)
-- [How to create a local Kubernetes cluster](lessons/01_create_local_kubernetes_cluster.md)
-
-## Sessions
-
-At the end of each session, I create a document with 4 things:
-
-* The goals of the session
-* Your questions
-* Insights we gained during the session (aka nuggets of wisdom)
-* Video recordings and slides
-
-You can find the documents in the [lessons](lessons) folder.
-
-- [Session 1](lessons/session_1.md)
-- [Session 2](lessons/session_2.md)
-- [Session 3](lessons/session_3.md)
-- [Session 4](lessons/session_4.md)
-- [Session 5](lessons/session_5.md)
-- [Session 6](lessons/session_6.md)
-- [Session 7](lessons/session_7.md)
-- [Session 8](lessons/session_8.md)
-- [Session 9](lessons/session_9.md)
-- [Session 10](lessons/session_10.md)
-- [Session 11](lessons/session_11.md)
-- [Session 12](lessons/session_12.md)
-- [Session 13](lessons/session_13.md)
-- [Session 14](lessons/session_14.md)
-- [Session 15](lessons/session_15.md)
+1. Clone the repository
+2. [OPTIONAL] Build the repository in a devcontainer
+2. Run the dev `kind` cluster
+    a. `cd deployments/dev/kind`
+    b. `chmod 755 create_cluster.sh`
+    c. `. ./create_cluster.sh`
+3. Forward the ports from `k9s`
+4. Set the credentials
+    a. `minio`: set the `minio-key` in `localhost:9000`
+    b. 
+4. Run the services via `make build-and-deploy service={service} env={prod or dev}``
+    a. `trades`
+    b. `candles`
+    c. `technical-indicators`
+    d. `training-pipeline`
+    e. `prediction-generator`
+    f. `prediction-api`
+5. Port forward the services
+    a. Kafka UI - 8182:8182
+    b. Minio - 9000:9000
+    c. Grafana - 3000:3000
+    d. Risingwave - 4567:4567
+    e. Postgres - 5432:5432
+    f. Prediction API - 8080:8080

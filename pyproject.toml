@@ -28,6 +28,7 @@ members = [
     "services/predictor",
     "services/technical-indicators",
     "services/trades",
+    "services/news",
 ]
 
 [tool.uv.sources]

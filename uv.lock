@@ -6,6 +6,7 @@ requires-python = "==3.12.*"
 members = [
     "candles",
     "crypto-predictor-system",
+    "news",
     "predictor",
     "technical-indicators",
     "trades",
@@ -1662,6 +1663,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/6c/4f/ccdb8ad3a38e583f2
 wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/8d/776adee7bbf76365fdd7f2552710282c79a4ead5d2a46408c9043a2b70ba/networkx-3.5-py3-none-any.whl", hash = "sha256:0030d386a9a06dee3565298b4a734b68589749a544acbb6c412dc9e2489ec6ec", size = 2034406, upload-time = "2025-05-29T11:35:04.961Z" },
 ]
+
+[[package]]
+name = "news"
+version = "0.1.0"
+source = { editable = "services/news" }
 
 [[package]]
 name = "notebook"
